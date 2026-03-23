@@ -114,10 +114,10 @@ const BrowseMentors = () => {
               </div>
             </aside>
 
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-muted-foreground mb-4">{filtered.length} mentor{filtered.length !== 1 ? 's' : ''} found</p>
               {filtered.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                   {filtered.map((mentor, i) => (
                     <MentorCard key={mentor.id} mentor={mentor} index={i} />
                   ))}
