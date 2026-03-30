@@ -6,25 +6,27 @@ const footerLinks = {
     { label: 'How It Works', to: '/how-it-works' },
     { label: 'Pricing', to: '/pricing' },
     { label: 'My Dashboard', to: '/dashboard' },
-    { label: 'Corporate Plans', to: '/corporate' },
+    { label: 'Post Requirement', to: '/requirements/post' },
   ],
   'For Mentors': [
     { label: 'Become a Mentor', to: '/signup' },
     { label: 'Mentor Dashboard', to: '/mentor/dashboard' },
-    { label: 'Payout Info', to: '/payouts' },
-    { label: 'Resources', to: '/resources' },
-  ],
-  'Categories': [
-    { label: 'Technology', to: '/mentors?category=tech' },
-    { label: 'Data Science', to: '/mentors?category=data' },
-    { label: 'Design', to: '/mentors?category=design' },
-    { label: 'Marketing', to: '/mentors?category=marketing' },
+    { label: 'Earnings', to: '/mentor/earnings' },
+    { label: 'Resources', to: '/blog' },
   ],
   'Company': [
     { label: 'About Us', to: '/about' },
+    { label: 'Blog', to: '/blog' },
+    { label: 'Careers', to: '/careers' },
+    { label: 'Press', to: '/press' },
     { label: 'Contact', to: '/contact' },
-    { label: 'Privacy Policy', to: '/privacy' },
+  ],
+  'Support': [
+    { label: 'Help Center', to: '/help' },
+    { label: 'Safety', to: '/safety' },
+    { label: 'FAQ', to: '/faq' },
     { label: 'Terms of Service', to: '/terms' },
+    { label: 'Privacy Policy', to: '/privacy' },
   ],
 };
 
