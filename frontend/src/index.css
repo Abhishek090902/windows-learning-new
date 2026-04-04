@@ -6,6 +6,12 @@
 @tailwind utilities;
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   :root {
     --background: 210 20% 98%;
     --foreground: 220 20% 14%;
@@ -94,8 +100,22 @@
     @apply border-border;
   }
 
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    min-width: 320px;
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100vh;
+    overflow-x: clip;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -103,14 +123,74 @@
     overflow-wrap: break-word;
   }
 
-  h1 { @apply text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.08]; }
-  h2 { @apply text-3xl md:text-4xl font-bold leading-[1.12]; }
-  h3 { @apply text-2xl font-semibold leading-[1.2]; }
+  h1 {
+    font-size: clamp(1.875rem, 5vw, 3.75rem);
+    @apply font-bold leading-[1.08];
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 4vw, 2.75rem);
+    @apply font-bold leading-[1.12];
+  }
+
+  h3 {
+    font-size: clamp(1.25rem, 3vw, 1.875rem);
+    @apply font-semibold leading-[1.2];
+  }
 
   p {
     @apply leading-relaxed;
     text-wrap: pretty;
     overflow-wrap: break-word;
+    font-size: clamp(0.875rem, 2.3vw, 1rem);
+  }
+
+  img,
+  video,
+  iframe,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  img,
+  video,
+  iframe {
+    height: auto;
+  }
+
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  button,
+  [role="button"] {
+    min-height: 44px;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input,
+  select,
+  textarea {
+    min-height: 48px;
+    min-width: 0;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  table {
+    width: 100%;
   }
 }
 
@@ -120,11 +200,48 @@
   }
 
   .container-main {
-    @apply max-w-[1280px] mx-auto section-padding;
+    width: min(100%, 1280px);
+    @apply mx-auto section-padding;
+  }
+
+  .page-shell {
+    @apply w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8;
+  }
+
+  .card-grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 1rem;
+  }
+
+  .table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 @layer utilities {
+  .safe-wrap {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .text-balance {
     text-wrap: balance;
   }

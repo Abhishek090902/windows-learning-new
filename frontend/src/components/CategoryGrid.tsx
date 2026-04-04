@@ -12,11 +12,19 @@ const iconMap: Record<string, React.ElementType> = {
   PenTool,
 };
 
+const fallbackCategories = [
+  { id: 'frontend-development', name: 'Frontend', icon: 'Code', _count: { skills: 8 } },
+  { id: 'backend-development', name: 'Backend', icon: 'Code', _count: { skills: 8 } },
+  { id: 'data-ai', name: 'Data & AI', icon: 'BarChart3', _count: { skills: 8 } },
+  { id: 'design-creative', name: 'Design', icon: 'Palette', _count: { skills: 6 } },
+  { id: 'cloud-devops', name: 'Cloud', icon: 'TrendingUp', _count: { skills: 7 } },
+  { id: 'career-growth', name: 'Career', icon: 'Briefcase', _count: { skills: 5 } },
+];
+
 const CategoryGrid = () => {
   const { ref, isVisible } = useScrollReveal();
   const { data: categories = [], isLoading } = useCategories();
-
-  if (isLoading) return null;
+  const displayCategories = categories.length ? categories : fallbackCategories;
 
   return (
     <section ref={ref} className="py-20 md:py-28">
@@ -33,13 +41,13 @@ const CategoryGrid = () => {
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
-          {categories.map((cat: any, i: number) => {
+          {displayCategories.map((cat: any, i: number) => {
             const Icon = iconMap[cat.icon] || Code;
             return (
               <Link
                 key={cat.id}
                 to={`/mentors?category=${cat.id}`}
-                className={`group flex flex-col items-center p-6 rounded-xl bg-card border hover:border-primary/30 shadow-card hover:shadow-card-hover transition-all duration-300 active:scale-[0.97] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}
+                className={`group flex flex-col items-center p-6 rounded-xl bg-card border hover:border-primary/30 shadow-card hover:shadow-card-hover transition-all duration-300 active:scale-[0.97] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'} ${isLoading ? 'animate-pulse' : ''}`}
                 style={{ transitionDelay: isVisible ? `${150 + i * 80}ms` : '0ms' }}
               >
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/15 transition-colors">

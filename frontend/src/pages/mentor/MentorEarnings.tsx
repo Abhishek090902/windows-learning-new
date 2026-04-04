@@ -30,7 +30,7 @@ const MentorEarnings = () => {
   if (analyticsLoading || walletLoading) {
     return (
       <MentorLayout>
-        <div className="p-6 md:p-8 flex items-center justify-center min-h-[400px]">
+        <div className="page-shell flex items-center justify-center min-h-[400px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       </MentorLayout>
@@ -96,7 +96,7 @@ const MentorEarnings = () => {
 
   return (
     <MentorLayout>
-      <div className="p-6 md:p-8 max-w-5xl">
+      <div className="page-shell max-w-5xl">
         <h1 className="text-2xl font-bold mb-1">Earnings</h1>
         <p className="text-muted-foreground mb-6">Withdraw available earnings and maintain payout destinations.</p>
 
@@ -157,15 +157,15 @@ const MentorEarnings = () => {
 
             <div className="space-y-3">
               {payoutMethods.map((method: any) => (
-                <div key={method.id} className={`flex items-center gap-3 p-3 rounded-lg border ${selectedPayoutMethodId === method.id ? 'border-primary bg-primary/5' : ''}`}>
+                <div key={method.id} className={`flex items-start gap-3 p-3 rounded-lg border ${selectedPayoutMethodId === method.id ? 'border-primary bg-primary/5' : ''}`}>
                   {method.type === 'UPI' ? <Smartphone className="h-5 w-5 text-muted-foreground" /> : <Landmark className="h-5 w-5 text-muted-foreground" />}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{method.label}</p>
                     <p className="text-xs text-muted-foreground">
                       {method.provider} â€¢ {method.type}{method.accountNumberLast4 ? ` â€¢ ****${method.accountNumberLast4}` : method.upiId ? ` â€¢ ${method.upiId}` : ''}
                     </p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setSelectedPayoutMethodId(method.id)}>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setSelectedPayoutMethodId(method.id)}>
                     Use
                   </Button>
                 </div>
@@ -216,7 +216,7 @@ const MentorEarnings = () => {
               {transactions.map((tx: any) => {
                 const isCredit = Number(tx.amount) > 0;
                 return (
-                  <div key={tx.id} className="flex items-center gap-3 py-3 border-b last:border-0">
+                  <div key={tx.id} className="flex items-start gap-3 py-3 border-b last:border-0">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isCredit ? 'bg-accent/10 text-accent' : 'bg-destructive/10 text-destructive'}`}>
                       {isCredit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                     </div>
@@ -224,7 +224,7 @@ const MentorEarnings = () => {
                       <p className="text-sm font-medium truncate">{tx.description || tx.type}</p>
                       <p className="text-xs text-muted-foreground">{tx.provider} â€¢ {tx.status} â€¢ {format(new Date(tx.createdAt), 'MMM d, yyyy')}</p>
                     </div>
-                    <span className={`text-sm font-semibold ${isCredit ? 'text-accent' : 'text-foreground'}`}>
+                    <span className={`text-sm font-semibold shrink-0 ${isCredit ? 'text-accent' : 'text-foreground'}`}>
                       {isCredit ? '+' : ''}â‚¹{Number(tx.amount || 0).toLocaleString('en-IN')}
                     </span>
                   </div>

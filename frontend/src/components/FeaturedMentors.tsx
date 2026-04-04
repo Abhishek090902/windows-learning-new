@@ -37,6 +37,19 @@ const FeaturedMentors = () => {
           <div className="flex justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
+        ) : !featured.length ? (
+          <div className="rounded-3xl border bg-card/80 p-10 text-center shadow-card">
+            <h3 className="text-xl font-semibold mb-3">Mentor profiles are on the way</h3>
+            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+              Explore the full mentor directory to discover experts across skills, domains, and learning goals.
+            </p>
+            <Link
+              to="/mentors"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Explore mentors <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {featured.map((mentor: any, i: number) => (

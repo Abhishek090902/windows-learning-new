@@ -390,27 +390,8 @@ export const useSkills = () => {
   return useQuery({
     queryKey: ['skills'],
     queryFn: async () => {
-      // Get all skills from mentors and deduplicate
-      const mentorsResponse = await api.get('/mentors');
-      const mentors = mentorsResponse.data.data;
-      const allSkills = new Set<string>();
-      
-      mentors.forEach((mentor: any) => {
-        if (mentor.skills && Array.isArray(mentor.skills)) {
-          mentor.skills.forEach((skillItem: any) => {
-            if (skillItem.skill && skillItem.skill.name) {
-              allSkills.add(skillItem.skill.name);
-            }
-          });
-        }
-      });
-      
-      // Return skills as array of objects
-      return Array.from(allSkills).map(skill => ({
-        id: skill.toLowerCase().replace(/\s+/g, '-'),
-        name: skill,
-        category: 'general' // Default category, can be enhanced later
-      }));
+      const response = await api.get('/skills');
+      return response.data.data;
     },
   });
 };
@@ -419,58 +400,8 @@ export const useSkillsByCategory = () => {
   return useQuery({
     queryKey: ['skills-by-category'],
     queryFn: async () => {
-      const mentorsResponse = await api.get('/mentors');
-      const mentors = mentorsResponse.data.data;
-      const skillsByCategory: Record<string, string[]> = {};
-      
-      // Define some common skill categories
-      const categories = {
-        'Programming': ['javascript', 'python', 'react', 'node.js', 'typescript', 'java', 'cpp', 'html', 'css', 'vue', 'angular', 'php', 'ruby', 'go', 'rust', 'swift', 'kotlin'],
-        'Design': ['ui design', 'ux design', 'graphic design', 'web design', 'mobile design', 'figma', 'sketch', 'adobe photoshop', 'illustrator', 'xd'],
-        'Business': ['marketing', 'sales', 'business strategy', 'entrepreneurship', 'finance', 'accounting', 'project management', 'leadership'],
-        'Data Science': ['data analysis', 'machine learning', 'data science', 'statistics', 'sql', 'tableau', 'power bi', 'python', 'r'],
-        'Marketing': ['digital marketing', 'seo', 'sem', 'content marketing', 'social media marketing', 'email marketing', 'branding'],
-        'Writing': ['content writing', 'copywriting', 'technical writing', 'creative writing', 'blogging', 'editing'],
-        'Languages': ['english', 'spanish', 'french', 'german', 'chinese', 'japanese', 'hindi', 'arabic'],
-        'Other': []
-      };
-      
-      // Initialize categories
-      Object.keys(categories).forEach(cat => {
-        skillsByCategory[cat] = [];
-      });
-      
-      // Categorize skills from mentors
-      mentors.forEach((mentor: any) => {
-        if (mentor.skills && Array.isArray(mentor.skills)) {
-          mentor.skills.forEach((skillItem: any) => {
-            if (skillItem.skill && skillItem.skill.name) {
-              const skillName = skillItem.skill.name.toLowerCase();
-              let categorized = false;
-              
-              // Try to categorize the skill
-              for (const [category, keywords] of Object.entries(categories)) {
-                if (category === 'Other') continue;
-                
-                if (keywords.some(keyword => skillName.includes(keyword))) {
-                  if (!skillsByCategory[category].includes(skillItem.skill.name)) {
-                    skillsByCategory[category].push(skillItem.skill.name);
-                  }
-                  categorized = true;
-                  break;
-                }
-              }
-              
-              // If not categorized, add to Other
-              if (!categorized && !skillsByCategory['Other'].includes(skillItem.skill.name)) {
-                skillsByCategory['Other'].push(skillItem.skill.name);
-              }
-            }
-          });
-        }
-      });
-      
-      return skillsByCategory;
+      const response = await api.get('/skills/grouped');
+      return response.data.data;
     },
   });
 };

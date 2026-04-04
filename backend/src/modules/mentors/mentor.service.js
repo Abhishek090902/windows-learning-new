@@ -1,29 +1,65 @@
 import prisma from '../../config/db.js';
 
 export const getAllMentors = async (filters) => {
-  const { skill, minPrice, maxPrice, page = 1, limit = 10, sortBy = 'rating' } = filters;
+  const { skill, search, category, minPrice, maxPrice, page = 1, limit = 10, sortBy = 'rating' } = filters;
+  const normalizedSearch = (search || skill || '').trim();
 
   const where = {
     isVerified: true,
+    isActive: true,
+    deletedAt: null,
     ...(minPrice || maxPrice ? {
       hourlyRate: {
         ...(minPrice ? { gte: parseFloat(minPrice) } : {}),
         ...(maxPrice ? { lte: parseFloat(maxPrice) } : {}),
       }
     } : {}),
-    ...(skill ? {
+    ...(normalizedSearch ? {
+      OR: [
+        {
+          user: {
+            name: { contains: normalizedSearch, mode: 'insensitive' },
+          },
+        },
+        {
+          headline: { contains: normalizedSearch, mode: 'insensitive' },
+        },
+        {
+          bio: { contains: normalizedSearch, mode: 'insensitive' },
+        },
+        {
+          skills: {
+            some: {
+              skill: {
+                OR: [
+                  { name: { contains: normalizedSearch, mode: 'insensitive' } },
+                  { keywords: { has: normalizedSearch.toLowerCase() } },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    } : {}),
+    ...(category ? {
       skills: {
         some: {
           skill: {
-            name: { contains: skill, mode: 'insensitive' }
-          }
-        }
-      }
+            category: {
+              OR: [
+                { id: category },
+                { slug: category },
+              ],
+            },
+          },
+        },
+      },
     } : {}),
   };
 
   const orderBy = sortBy === 'price_asc' ? { hourlyRate: 'asc' } :
                  sortBy === 'price_desc' ? { hourlyRate: 'desc' } :
+                 sortBy === 'newest' ? { createdAt: 'desc' } :
                  { reviews: { _count: 'desc' } };
 
   return await prisma.mentorProfile.findMany({

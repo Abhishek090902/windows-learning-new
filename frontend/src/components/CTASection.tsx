@@ -7,7 +7,7 @@ const features = [
   'Live 1:1 video sessions with industry experts',
   'All mentors are Aadhaar-verified',
   'Secure payments via UPI, Cards & NetBanking',
-  'Flexible scheduling — book when you want',
+  'Flexible scheduling, book when you want',
   'Track your learning progress in one dashboard',
 ];
 
@@ -64,7 +64,7 @@ const CTASection = () => {
             className={`grid grid-cols-2 gap-4 transition-all duration-700 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-5'}`}
           >
             {[
-              { value: '₹500-₹3000', label: 'Per hour, set by mentors' },
+              { value: 'Rs.500-Rs.3000', label: 'Per hour, set by mentors' },
               { value: '80%', label: 'Earnings kept by mentors' },
               { value: '98%', label: 'Learner satisfaction' },
               { value: 'Weekly', label: 'Payouts every Friday' },

@@ -31,7 +31,7 @@ const LearnerOnboarding = () => {
     updateProfile({
       bio: goals,
       experienceLevel: level,
-      // skills: selectedSkills // We'll handle many-to-many skills later if needed
+      skills: selectedSkills,
     }, {
       onSuccess: async () => {
         await refreshUser();

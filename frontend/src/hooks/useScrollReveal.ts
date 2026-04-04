@@ -8,6 +8,15 @@ export function useScrollReveal(threshold = 0.2) {
     const el = ref.current;
     if (!el) return;
 
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
+      setIsVisible(true);
+      return;
+    }
+
+    const fallbackTimer = window.setTimeout(() => {
+      setIsVisible(true);
+    }, 900);
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -15,11 +24,14 @@ export function useScrollReveal(threshold = 0.2) {
           observer.unobserve(el);
         }
       },
-      { threshold }
+      { threshold, rootMargin: '0px 0px -10% 0px' }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      observer.disconnect();
+    };
   }, [threshold]);
 
   return { ref, isVisible };

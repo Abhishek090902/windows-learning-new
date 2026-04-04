@@ -4,6 +4,52 @@ import prisma from '../../config/db.js';
 
 const router = express.Router();
 
+const mentorInclude = {
+  user: { select: { name: true, email: true } },
+  skills: { include: { skill: true } },
+  reviews: true,
+  _count: { select: { reviews: true } },
+};
+
+const buildFallbackWhere = (query, skills = []) => ({
+  isVerified: true,
+  isActive: true,
+  deletedAt: null,
+  OR: [
+    {
+      user: {
+        name: { contains: query, mode: 'insensitive' },
+      },
+    },
+    {
+      headline: { contains: query, mode: 'insensitive' },
+    },
+    {
+      bio: { contains: query, mode: 'insensitive' },
+    },
+    {
+      skills: {
+        some: {
+          skill: {
+            name: { contains: query, mode: 'insensitive' },
+          },
+        },
+      },
+    },
+    ...(skills.length
+      ? [{
+          skills: {
+            some: {
+              skill: {
+                name: { in: skills },
+              },
+            },
+          },
+        }]
+      : []),
+  ],
+});
+
 // Calculate mentor score based on weighted skills
 const calculateMentorScore = (mentor, weightedSkills, parsedExperienceLevel) => {
   let skillScore = 0;
@@ -14,9 +60,12 @@ const calculateMentorScore = (mentor, weightedSkills, parsedExperienceLevel) => 
     }
   }
   
-  const experienceScore = mentor.experienceLevel === parsedExperienceLevel ? 1 : 0.5;
-  const ratingScore = mentor.rating ? mentor.rating / 5 : 0.5;
-  const availabilityScore = mentor.isAvailable ? 1 : 0;
+  const experienceScore = parsedExperienceLevel ? 0.8 : 0.5;
+  const avgRating = mentor.reviews?.length
+    ? mentor.reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / mentor.reviews.length
+    : 0;
+  const ratingScore = avgRating ? avgRating / 5 : 0.5;
+  const availabilityScore = mentor.weeklySchedule && Object.keys(mentor.weeklySchedule || {}).length ? 1 : 0.4;
   
   return (skillScore * 0.6) + (experienceScore * 0.15) + (ratingScore * 0.15) + (availabilityScore * 0.1);
 };
@@ -34,68 +83,33 @@ router.post('/search-intent', async (req, res) => {
     // Process with Pollinations.AI
     const aiOutput = await processSearchIntent(query);
     
-    // If AI failed (fallback mode), do simple keyword search
-    if (aiOutput.isFallback) {
-      const mentors = await prisma.mentorProfile.findMany({
-        where: {
-          skills: {
-            some: {
-              skill: {
-                name: { contains: query, mode: 'insensitive' }
-              }
-            }
-          }
-        },
-        include: { 
-          user: { select: { name: true, email: true } },
-          skills: { include: { skill: true } },
-          reviews: true,
-          _count: { select: { reviews: true } }
-        }
+    const { required_skills, weighted_skills, experience_level, action } = aiOutput;
+    let mentors = [];
+
+    if (action !== 'questions_first') {
+      mentors = await prisma.mentorProfile.findMany({
+        where: buildFallbackWhere(query, required_skills || []),
+        include: mentorInclude,
       });
-      
-      return res.json({ 
-        mentors, 
-        aiOutput: { 
-          problem_summary: `Searching for: "${query}"`,
-          required_skills: [query],
-          isFallback: true 
-        } 
-      });
-    }
-    
-    // AI succeeded - get ranked mentors
-    const { required_skills, weighted_skills, experience_level } = aiOutput;
-    
-    let mentors = await prisma.mentorProfile.findMany({
-      where: {
-        skills: {
-          some: {
-            skill: {
-              name: { in: required_skills }
-            }
-          }
-        }
-      },
-      include: { 
-        user: { select: { name: true, email: true } },
-        skills: { include: { skill: true } },
-        reviews: true,
-        _count: { select: { reviews: true } }
+
+      if (!mentors.length) {
+        mentors = await prisma.mentorProfile.findMany({
+          where: buildFallbackWhere(query, []),
+          include: mentorInclude,
+        });
       }
-    });
-    
-    // Rank mentors by score
-    mentors = mentors.map(mentor => ({
-      ...mentor,
-      score: calculateMentorScore(mentor, weighted_skills || [], experience_level),
-      matchedSkills: (weighted_skills || [])
-        .filter(ws => mentor.skills && mentor.skills.map(s => s?.skill?.name).includes(ws.skill))
-        .map(ws => ws.skill)
-    }));
-    
-    mentors.sort((a, b) => (b.score || 0) - (a.score || 0));
-    
+
+      mentors = mentors.map(mentor => ({
+        ...mentor,
+        score: calculateMentorScore(mentor, weighted_skills || [], experience_level),
+        matchedSkills: (weighted_skills || [])
+          .filter(ws => mentor.skills && mentor.skills.map(s => s?.skill?.name).includes(ws.skill))
+          .map(ws => ws.skill)
+      }));
+
+      mentors.sort((a, b) => (b.score || 0) - (a.score || 0));
+    }
+
     res.json({ mentors, aiOutput });
     
   } catch (error) {

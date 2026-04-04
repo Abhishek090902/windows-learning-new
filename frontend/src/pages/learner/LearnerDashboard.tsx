@@ -1,16 +1,19 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, Clock, Star, Calendar, ChevronRight, Heart, TrendingUp, Video, Bell, ArrowRight, Wallet } from 'lucide-react';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import LearnerLayout from '@/components/LearnerLayout';
 import { useLearnerAnalytics, useLearnerSessions, useWallet } from '@/hooks/useApi';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { LearnerDashboardSkeleton } from '@/components/LoadingSkeleton';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 
 const LearnerDashboard = () => {
+  const { user } = useAuth();
   const { data: analytics, isLoading: analyticsLoading } = useLearnerAnalytics();
   const { data: sessions, isLoading: sessionsLoading } = useLearnerSessions();
   const { data: wallet, isLoading: walletLoading } = useWallet();
@@ -18,6 +21,23 @@ const LearnerDashboard = () => {
   const upcomingSessions = sessions?.filter((s: any) => s.status === 'CONFIRMED' || s.status === 'PENDING' || s.status === 'ONGOING') || [];
   const pastSessions = sessions?.filter((s: any) => s.status === 'COMPLETED') || [];
   const pendingApprovalCount = sessions?.filter((s: any) => s.status === 'PENDING').length || 0;
+  const learnerSkills = useMemo(() => user?.learnerProfile?.skills || [], [user]);
+  const skillsProgress = useMemo(() => {
+    return learnerSkills.map((entry: any) => {
+      const skillName = entry.skill?.name || entry.name || 'Skill';
+      const relatedSessions = (sessions || []).filter((session: any) =>
+        [session.topic, session.mentor?.headline, session.mentor?.bio]
+          .filter(Boolean)
+          .some((value: string) => String(value).toLowerCase().includes(skillName.toLowerCase())),
+      );
+
+      return {
+        name: skillName,
+        progress: Math.min(100, relatedSessions.length * 20 || 10),
+        sessions: relatedSessions.length,
+      };
+    });
+  }, [learnerSkills, sessions]);
 
   // Auto-refresh every 60 s as a fallback to socket real-time updates
   useAutoRefresh([['analytics', 'learner'], ['sessions', 'learner'], ['wallet']], 60_000);
@@ -33,19 +53,19 @@ const LearnerDashboard = () => {
   return (
     <ErrorBoundary>
       <LearnerLayout>
-        <div className="p-6 md:p-8 max-w-6xl">
+        <div className="page-shell max-w-6xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold">My Learning Dashboard</h1>
             <p className="text-sm text-muted-foreground">Track your progress and manage sessions</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link to="/settings"><Button variant="outline" size="sm" className="gap-2"><Bell className="h-4 w-4" /> Notifications</Button></Link>
-            <Link to="/mentors"><Button size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Find Mentors</Button></Link>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Link to="/settings"><Button variant="outline" size="sm" className="w-full sm:w-auto gap-2"><Bell className="h-4 w-4" /> Notifications</Button></Link>
+            <Link to="/mentors"><Button size="sm" className="w-full sm:w-auto gap-2"><BookOpen className="h-4 w-4" /> Find Mentors</Button></Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total Sessions', value: analytics?.totalSessions?.toString() || '0', icon: Video },
             { label: 'Completed', value: analytics?.completedSessions?.toString() || '0', icon: Clock },
@@ -74,8 +94,8 @@ const LearnerDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 {upcomingSessions.map((session: any) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border">
-                    <div className="flex items-center gap-4">
+                  <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-secondary/50 border">
+                    <div className="flex items-center gap-4 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
                         {session.mentor?.user?.name?.split(' ').map((n: string) => n[0]).join('') || 'M'}
                       </div>
@@ -87,7 +107,7 @@ const LearnerDashboard = () => {
                         )}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="text-sm font-medium">{format(new Date(session.startTime), 'MMM d, yyyy')}</p>
                       <p className="text-xs text-muted-foreground flex items-center justify-end gap-1"><Clock className="h-3 w-3" /> {format(new Date(session.startTime), 'HH:mm')}</p>
                     </div>
@@ -111,8 +131,8 @@ const LearnerDashboard = () => {
               <CardHeader className="pb-3"><CardTitle className="text-lg">Past Sessions</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {pastSessions.map((session: any) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border">
-                    <div className="flex items-center gap-4">
+                  <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-secondary/50 border">
+                    <div className="flex items-center gap-4 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-accent/10 text-accent flex items-center justify-center text-sm font-bold">
                         {session.mentor?.user?.name?.split(' ').map((n: string) => n[0]).join('') || 'M'}
                       </div>
@@ -121,7 +141,7 @@ const LearnerDashboard = () => {
                         <p className="text-xs text-muted-foreground">Completed</p>
                       </div>
                     </div>
-                    <div className="text-right flex items-center gap-2">
+                    <div className="text-left sm:text-right flex items-center gap-2">
                       {session.review && (
                         <div className="flex items-center gap-0.5">
                           {Array.from({ length: session.review.rating }).map((_, i) => (
@@ -145,9 +165,19 @@ const LearnerDashboard = () => {
             <Card>
               <CardHeader className="pb-3"><CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Skill Progress</CardTitle></CardHeader>
               <CardContent className="space-y-5">
-                <div className="text-center py-4 text-sm text-muted-foreground">
-                  Start learning to see your progress here.
-                </div>
+                {skillsProgress.length ? skillsProgress.slice(0, 4).map((skill) => (
+                  <div key={skill.name}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">{skill.name}</p>
+                      <p className="text-xs text-muted-foreground">{skill.sessions} session{skill.sessions === 1 ? '' : 's'}</p>
+                    </div>
+                    <Progress value={skill.progress} className="h-2" />
+                  </div>
+                )) : (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    Add skills in onboarding to see your progress here.
+                  </div>
+                )}
               </CardContent>
             </Card>
             

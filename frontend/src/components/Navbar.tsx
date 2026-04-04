@@ -33,18 +33,18 @@ const Navbar = () => {
   const dashboardPath = user ? getDefaultAuthenticatedRoute(user) : appRoutes.login;
 
   return (
-    <header className={`w-full z-50 ${isHome ? 'absolute top-0 left-0 right-0' : 'sticky top-0 bg-card border-b shadow-sm'}`}>
-      <nav className="container-main flex items-center justify-between h-16 md:h-[72px]">
+    <header className={`w-full z-50 ${isHome ? 'absolute top-0 left-0 right-0' : 'sticky top-0 bg-card/95 backdrop-blur border-b shadow-sm'}`}>
+      <nav className="container-main flex min-w-0 items-center justify-between gap-3 py-3 md:h-[72px] md:py-0">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-1.5 shrink-0">
-          <div className={`text-xl font-bold tracking-tight ${isHome ? 'text-white' : 'text-foreground'}`}>
+        <Link to="/" className="flex min-w-0 items-center gap-1.5 shrink-0">
+          <div className={`text-base sm:text-xl font-bold tracking-tight safe-wrap ${isHome ? 'text-white' : 'text-foreground'}`}>
             Windows<span className="text-accent">Learning</span>
           </div>
         </Link>
 
         {/* Search - hidden on home hero, visible elsewhere */}
         {!isHome && (
-          <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
+          <div className="hidden md:flex items-center flex-1 max-w-md mx-4 lg:mx-8">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
@@ -59,7 +59,7 @@ const Navbar = () => {
         )}
 
         {/* Desktop Nav */}
-        <div className={`hidden md:flex items-center gap-6 ${isHome ? 'text-white/90' : 'text-foreground'}`}>
+        <div className={`hidden md:flex items-center gap-4 lg:gap-6 ${isHome ? 'text-white/90' : 'text-foreground'}`}>
           <Link to={appRoutes.mentors} className="text-sm font-medium hover:opacity-80 transition-opacity">
             Find Mentors
           </Link>
@@ -70,8 +70,8 @@ const Navbar = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 outline-none group">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
+                <button className="flex min-h-[44px] items-center gap-2 outline-none group rounded-lg px-1">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 group-hover:bg-primary/20 transition-colors">
                     <User className={`h-4 w-4 ${isHome ? 'text-white' : 'text-primary'}`} />
                   </div>
                   <span className="text-sm font-medium hidden sm:inline-block">
@@ -123,7 +123,7 @@ const Navbar = () => {
 
         {/* Mobile menu button */}
         <button
-          className={`md:hidden p-2 ${isHome ? 'text-white' : 'text-foreground'}`}
+          className={`md:hidden inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 ${isHome ? 'text-white' : 'text-foreground'}`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle menu"
         >
@@ -157,20 +157,20 @@ const Navbar = () => {
               <input
                 type="text"
                 placeholder="Search mentors..."
-                className="w-full h-10 pl-10 pr-4 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="w-full h-12 pl-10 pr-4 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
             </div>
-            <Link to={appRoutes.mentors} className="block py-2 text-sm font-medium" onClick={() => setIsMenuOpen(false)}>Find Mentors</Link>
-            <Link to="/how-it-works" className="block py-2 text-sm font-medium" onClick={() => setIsMenuOpen(false)}>How It Works</Link>
+            <Link to={appRoutes.mentors} className="block rounded-lg px-2 py-3 text-sm font-medium" onClick={() => setIsMenuOpen(false)}>Find Mentors</Link>
+            <Link to="/how-it-works" className="block rounded-lg px-2 py-3 text-sm font-medium" onClick={() => setIsMenuOpen(false)}>How It Works</Link>
             
             {user ? (
               <>
-                <Link to={dashboardPath} className="block py-2 text-sm font-medium" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
-                <button onClick={() => { logout(); setIsMenuOpen(false); }} className="block py-2 text-sm font-medium text-destructive">Log out</button>
+                <Link to={dashboardPath} className="block rounded-lg px-2 py-3 text-sm font-medium" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+                <button onClick={() => { logout(); setIsMenuOpen(false); }} className="block w-full rounded-lg px-2 py-3 text-left text-sm font-medium text-destructive">Log out</button>
               </>
             ) : (
               <>
-                <Link to={appRoutes.login} className="block py-2 text-sm font-medium" onClick={() => setIsMenuOpen(false)}>Sign In</Link>
+                <Link to={appRoutes.login} className="block rounded-lg px-2 py-3 text-sm font-medium" onClick={() => setIsMenuOpen(false)}>Sign In</Link>
                 <Link to={appRoutes.signup} onClick={() => setIsMenuOpen(false)}>
                   <Button size="sm" className="w-full">Join as Mentor</Button>
                 </Link>

@@ -54,7 +54,7 @@ const Hero = () => {
             className="mt-5 text-lg md:text-xl text-white/80 max-w-lg opacity-0 animate-fade-up"
             style={{ animationDelay: '250ms' }}
           >
-            Connect with verified industry experts for personalized, real-time mentorship sessions. No pre-recorded courses — just live guidance.
+            Connect with verified industry experts for personalized, real-time mentorship sessions. No pre-recorded courses, just live guidance.
           </p>
 
           {/* Search bar */}

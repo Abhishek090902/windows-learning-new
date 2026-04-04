@@ -211,7 +211,7 @@ const LearnerWallet = () => {
   if (isLoading) {
     return (
       <LearnerLayout>
-        <div className="p-6 md:p-8 flex items-center justify-center min-h-[400px]">
+        <div className="page-shell flex items-center justify-center min-h-[400px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       </LearnerLayout>
@@ -224,11 +224,11 @@ const LearnerWallet = () => {
 
   return (
     <LearnerLayout>
-      <div className="p-6 md:p-8 max-w-5xl">
+      <div className="page-shell max-w-5xl">
         <h1 className="text-2xl font-bold mb-1">My Wallet</h1>
         <p className="text-muted-foreground mb-6">Add funds, pay securely, and track every transaction.</p>
 
-        <div className="grid lg:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
           <Card className="lg:col-span-2 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
             <CardContent className="p-6">
               <p className="text-sm opacity-80 mb-1">Available Balance</p>
@@ -289,8 +289,8 @@ const LearnerWallet = () => {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={handleAddFunds} disabled={createDepositIntent.isPending || verifyRazorpayPayment.isPending}>
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
+              <Button className="w-full sm:w-auto" onClick={handleAddFunds} disabled={createDepositIntent.isPending || verifyRazorpayPayment.isPending}>
                 {createDepositIntent.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Continue to Payment
               </Button>
@@ -314,7 +314,7 @@ const LearnerWallet = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Saved Payment Methods</CardTitle>
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowAddMethod((prev) => !prev)}>
+              <Button variant="outline" size="sm" className="gap-1 w-full sm:w-auto" onClick={() => setShowAddMethod((prev) => !prev)}>
                 <Plus className="h-3 w-3" /> Add Method
               </Button>
             </div>
@@ -349,9 +349,9 @@ const LearnerWallet = () => {
             )}
 
             {paymentMethods.map((method: any) => (
-              <div key={method.id} className="flex items-center gap-3 p-3 rounded-lg border">
+              <div key={method.id} className="flex items-start gap-3 p-3 rounded-lg border">
                 {method.type === 'UPI' ? <Smartphone className="h-5 w-5 text-muted-foreground" /> : <CreditCard className="h-5 w-5 text-muted-foreground" />}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{method.label}</p>
                   <p className="text-xs text-muted-foreground">
                     {method.provider} â€¢ {method.type}{method.last4 ? ` â€¢ **** ${method.last4}` : ''}
@@ -378,7 +378,7 @@ const LearnerWallet = () => {
               {transactions.map((tx: any) => {
                 const isCredit = Number(tx.amount) > 0;
                 return (
-                  <div key={tx.id} className="flex items-center gap-3 py-3 border-b last:border-0">
+                  <div key={tx.id} className="flex items-start gap-3 py-3 border-b last:border-0">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isCredit ? 'bg-accent/10 text-accent' : 'bg-destructive/10 text-destructive'}`}>
                       {isCredit ? <ArrowDownLeft className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                     </div>

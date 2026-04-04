@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 import { emitDataUpdate } from '../utils/socketEmitter.js';
 import { sendSuccess } from '../utils/responseHandler.js';
+import { syncMentorProfileSkills } from '../utils/skillCatalog.js';
 
 const mentorProfileInclude = {
   user: {
@@ -34,6 +35,11 @@ const mentorProfileInclude = {
       sessions: { where: { status: 'COMPLETED' } },
     },
   },
+  skills: {
+    include: {
+      skill: true,
+    },
+  },
 };
 
 const buildProfilePayload = (profile) => {
@@ -54,6 +60,7 @@ const buildProfilePayload = (profile) => {
       learnerName: review.learner?.user?.name || 'Learner',
       learnerImage: review.learner?.user?.profilePicture || null,
     })),
+    normalizedSkills: (profile.skills || []).map((entry) => entry.skill?.name).filter(Boolean),
   };
 };
 
@@ -188,6 +195,13 @@ const createMentorProfile = async (req, res) => {
       include: mentorProfileInclude,
     });
 
+    await syncMentorProfileSkills(profile.id, req.body.skillsData || {});
+
+    const hydratedProfile = await prisma.mentorProfile.findUnique({
+      where: { id: profile.id },
+      include: mentorProfileInclude,
+    });
+
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -215,7 +229,7 @@ const createMentorProfile = async (req, res) => {
       success: true,
       message: 'Mentor profile created successfully',
       data: {
-        profile: buildProfilePayload(profile),
+        profile: buildProfilePayload(hydratedProfile),
         user: updatedUser,
       },
     });
@@ -245,6 +259,13 @@ const updateMentorProfile = async (req, res) => {
       include: mentorProfileInclude,
     });
 
+    await syncMentorProfileSkills(id, req.body.skillsData || {});
+
+    const hydratedProfile = await prisma.mentorProfile.findUnique({
+      where: { id },
+      include: mentorProfileInclude,
+    });
+
     await createOrUpdateUserBasics(userId, req.body.fullName, req.body.profileImage);
 
     const updatedUser = await prisma.user.findUnique({
@@ -265,7 +286,7 @@ const updateMentorProfile = async (req, res) => {
       success: true,
       message: 'Profile updated successfully',
       data: {
-        profile: buildProfilePayload(updatedProfile),
+        profile: buildProfilePayload(hydratedProfile || updatedProfile),
         user: updatedUser,
       },
     });

@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Inbox, FileText, Calendar, DollarSign, Clock, UserCircle, HelpCircle, LogOut, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Inbox, FileText, Calendar, DollarSign, Clock, UserCircle, HelpCircle, LogOut, MessageSquare, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { appRoutes } from '@/lib/appRoutes';
 
@@ -19,6 +19,7 @@ const sidebarItems = [
 const MentorLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const initials = user?.name?.split(' ').map(n => n[0]).join('') || 'M';
 
@@ -66,14 +67,70 @@ const MentorLayout = ({ children }: { children: ReactNode }) => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="lg:hidden border-b bg-card px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="text-lg font-bold">Windows<span className="text-accent">Learning</span></Link>
+        <header className="lg:hidden border-b bg-card px-4 py-3 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border bg-background"
+            aria-label="Open mentor menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <Link to="/" className="text-lg font-bold safe-wrap">Windows<span className="text-accent">Learning</span></Link>
           <div className="flex items-center gap-3">
-            <Link to={appRoutes.settings} className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+            <Link to={appRoutes.settings} className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
               {initials}
             </Link>
           </div>
         </header>
+        {isMobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+            <div className="h-full w-[min(88vw,22rem)] bg-card border-r shadow-xl flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b">
+                <Link to="/" className="text-lg font-bold" onClick={() => setIsMobileMenuOpen(false)}>
+                  Windows<span className="text-accent">Learning</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border bg-background"
+                  aria-label="Close mentor menu"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+                {sidebarItems.map(item => {
+                  const active = location.pathname === item.to;
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ${
+                        active ? 'bg-primary text-primary-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+              <div className="border-t p-4">
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" /> Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>

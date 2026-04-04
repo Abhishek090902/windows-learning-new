@@ -1,4 +1,5 @@
 import prisma from '../../config/db.js';
+import { syncLearnerSkills } from '../../utils/skillCatalog.js';
 
 export const getAllUsers = async () => {
   return await prisma.user.findMany({
@@ -18,11 +19,11 @@ export const getUserById = async (id) => {
 };
 
 export const updateUserProfile = async (userId, data) => {
-  const { name, bio, role, profilePicture, ...profileData } = data;
+  const { name, bio, role, profilePicture, skills = [], ...profileData } = data;
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new Error('User not found');
 
-  return await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       ...(name && { name }),
@@ -81,6 +82,20 @@ export const updateUserProfile = async (userId, data) => {
       wallet: true,
     },
   });
+
+  if (role === 'LEARNER' && updatedUser.learnerProfile?.id) {
+    await syncLearnerSkills(updatedUser.learnerProfile.id, Array.isArray(skills) ? skills : []);
+    return prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        learnerProfile: { include: { skills: { include: { skill: true } } } },
+        mentorProfile: { include: { skills: { include: { skill: true } } } },
+        wallet: true,
+      },
+    });
+  }
+
+  return updatedUser;
 };
 
 export const switchUserRole = async (userId, nextRole) => {

@@ -39,7 +39,7 @@ const MentorDashboard = () => {
   return (
     <ErrorBoundary>
       <MentorLayout>
-        <div className="p-6 md:p-8 max-w-6xl">
+        <div className="page-shell max-w-6xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">
@@ -50,13 +50,13 @@ const MentorDashboard = () => {
               <p className="text-sm text-muted-foreground">Here's your mentoring overview</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link to={appRoutes.settings}><Button variant="outline" size="sm" className="gap-2"><Bell className="h-4 w-4" /> Notifications</Button></Link>
-            <Link to={appRoutes.mentorProfileEdit}><Button variant="outline" size="sm" className="gap-2">Edit Profile</Button></Link>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <Link to={appRoutes.settings}><Button variant="outline" size="sm" className="w-full sm:w-auto gap-2"><Bell className="h-4 w-4" /> Notifications</Button></Link>
+            <Link to={appRoutes.mentorProfileEdit}><Button variant="outline" size="sm" className="w-full sm:w-auto gap-2">Edit Profile</Button></Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total Earnings', value: `₹${Number(analytics?.totalEarnings || 0).toLocaleString('en-IN')}`, icon: IndianRupee, change: '+0%', positive: true },
             { label: 'Total Sessions', value: analytics?.totalSessions?.toString() || '0', icon: Video, change: '+0', positive: true },
@@ -89,8 +89,8 @@ const MentorDashboard = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 {recentRequirements.map((req: any) => (
-                  <div key={req.id} className="flex items-center gap-3 p-3 rounded-lg border">
-                    <div className="flex-1">
+                  <div key={req.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border">
+                    <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{req.title}</p>
                       <p className="text-xs text-muted-foreground">Budget: ₹{Number(req.budget || 0).toLocaleString('en-IN')} · By {req.learner?.user?.name}</p>
                     </div>
@@ -120,8 +120,8 @@ const MentorDashboard = () => {
                   </div>
                 )}
                 {upcomingSessions.map((session: any) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border">
-                    <div className="flex items-center gap-4">
+                  <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-secondary/50 border">
+                    <div className="flex items-center gap-4 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
                         {session.learner?.user?.name?.split(' ').map((n: string) => n[0]).join('') || 'L'}
                       </div>
@@ -130,7 +130,7 @@ const MentorDashboard = () => {
                         <p className="text-xs text-muted-foreground">{session.status}</p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="text-sm font-medium">{format(new Date(session.startTime), 'MMM d, yyyy')}</p>
                       <p className="text-xs text-muted-foreground flex items-center justify-end gap-1"><Clock className="h-3 w-3" /> {format(new Date(session.startTime), 'HH:mm')}</p>
                     </div>
@@ -148,8 +148,8 @@ const MentorDashboard = () => {
               <CardHeader className="pb-3"><CardTitle className="text-lg">Recent Sessions</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 {recentSessions.map((session: any) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border">
-                    <div className="flex items-center gap-4">
+                  <div key={session.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-secondary/50 border">
+                    <div className="flex items-center gap-4 min-w-0">
                       <div className="w-10 h-10 rounded-full bg-accent/10 text-accent flex items-center justify-center text-sm font-bold">
                         {session.learner?.user?.name?.split(' ').map((n: string) => n[0]).join('') || 'L'}
                       </div>
@@ -158,7 +158,7 @@ const MentorDashboard = () => {
                         <p className="text-xs text-muted-foreground">Completed</p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="text-sm font-semibold text-accent tabular-nums">+₹{Number(session.earned || 0).toLocaleString('en-IN')}</p>
                       <p className="text-xs text-muted-foreground">{format(new Date(session.startTime), 'MMM d')}</p>
                     </div>

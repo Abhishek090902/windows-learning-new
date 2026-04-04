@@ -26,16 +26,16 @@ const MentorCard = ({ mentor, index = 0, isVisible = true }: MentorCardProps) =>
     >
       {/* Header */}
       <div className="p-5 pb-3">
-        <div className="flex items-start gap-4">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           {/* Avatar */}
           <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center text-base font-bold shrink-0">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 items-center gap-1.5 flex-wrap">
               <Link
                 to={`/mentor/${mentor.id}`}
-                className="text-sm font-semibold truncate hover:underline"
+                className="min-w-0 text-sm font-semibold truncate hover:underline"
               >
                 {name}
               </Link>
@@ -70,13 +70,13 @@ const MentorCard = ({ mentor, index = 0, isVisible = true }: MentorCardProps) =>
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-3.5 border-t bg-secondary/30 flex items-center justify-between">
+      <div className="px-5 py-3.5 border-t bg-secondary/30 flex items-center justify-between gap-3">
         <div className="flex items-center gap-1">
           <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
           <span className="text-sm font-semibold tabular-nums">{rating}</span>
           <span className="text-xs text-muted-foreground">({reviewCount})</span>
         </div>
-        <div className="text-right flex items-end gap-2">
+        <div className="text-right flex items-end gap-2 min-w-0">
           <div>
             <span className="text-sm font-bold">₹{Number(mentor.hourlyRate || 0).toLocaleString('en-IN')}</span>
             <span className="text-xs text-muted-foreground">/hr</span>

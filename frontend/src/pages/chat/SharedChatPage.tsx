@@ -6,7 +6,7 @@ import MentorLayout from '@/components/MentorLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatConversations, useMessages, useSendMessage } from '@/hooks/useApi';
 import { appRoutes, getChatRoute } from '@/lib/appRoutes';
-import { Send, User, MessageCircle, Search, Phone, Video, CheckCheck } from 'lucide-react';
+import { Send, User, MessageCircle, Search, Phone, Video, CheckCheck, ArrowLeft } from 'lucide-react';
 
 type Conversation = {
   otherUserId: string;
@@ -71,6 +71,8 @@ const SharedChatPage = () => {
   }, [typedMessages]);
 
   const activeConversation = filteredConversations.find((conversation) => conversation.otherUserId === activeOtherUserId);
+  const showConversationList = !activeOtherUserId;
+  const showConversationPane = Boolean(activeOtherUserId);
 
   const formatTime = (date: string | Date) => {
     const messageDate = new Date(date);
@@ -111,8 +113,8 @@ const SharedChatPage = () => {
   return (
     <Layout>
       <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
-        <div className="border-b bg-gradient-to-r from-card to-card/95 backdrop-blur-sm px-6 py-4 shadow-sm">
-          <div className="flex items-center justify-between gap-4">
+        <div className="border-b bg-gradient-to-r from-card to-card/95 backdrop-blur-sm px-4 sm:px-6 py-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <MessageCircle className="h-7 w-7 text-primary" />
@@ -125,7 +127,7 @@ const SharedChatPage = () => {
             </div>
             <Link
               to={emptyActionLink}
-              className="text-sm text-primary hover:underline flex items-center gap-1 px-3 py-1.5 bg-primary/10 rounded-lg hover:bg-primary/20 transition-all"
+              className="text-sm text-primary hover:underline inline-flex items-center gap-1 px-3 py-2 bg-primary/10 rounded-lg hover:bg-primary/20 transition-all self-start"
             >
               {emptyActionLabel}
             </Link>
@@ -133,7 +135,7 @@ const SharedChatPage = () => {
         </div>
 
         <div className="flex flex-1 overflow-hidden">
-          <div className="w-96 border-r bg-gradient-to-b from-card to-muted/20 flex flex-col">
+          <div className={`${showConversationList ? 'flex' : 'hidden'} md:flex w-full md:w-96 lg:w-[26rem] border-r bg-gradient-to-b from-card to-muted/20 flex-col min-w-0`}>
             <div className="p-4 border-b bg-card/50">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -206,7 +208,7 @@ const SharedChatPage = () => {
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col bg-gradient-to-b from-background via-background to-muted/10">
+          <div className={`${showConversationPane ? 'flex' : 'hidden'} md:flex flex-1 flex-col bg-gradient-to-b from-background via-background to-muted/10 min-w-0`}>
             {!activeOtherUserId ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center max-w-md">
@@ -221,9 +223,20 @@ const SharedChatPage = () => {
               </div>
             ) : (
               <>
-                <div className="border-b bg-gradient-to-r from-card to-card/95 backdrop-blur-sm px-6 py-4 shadow-sm">
-                  <div className="flex items-center justify-between">
+                <div className="border-b bg-gradient-to-r from-card to-card/95 backdrop-blur-sm px-4 sm:px-6 py-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="md:hidden"
+                        onClick={() => {
+                          setActiveOtherUserId(null);
+                          navigate(appRoutes.chat);
+                        }}
+                      >
+                        <ArrowLeft className="h-5 w-5" />
+                      </Button>
                       <div className="relative">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 text-primary flex items-center justify-center border-2 border-primary/20">
                           <User className="h-6 w-6" />
@@ -235,7 +248,7 @@ const SharedChatPage = () => {
                         <p className="text-sm text-muted-foreground">Active conversation</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Button variant="ghost" size="sm" className="p-2 hover:bg-secondary/80 rounded-xl transition-all">
                         <Phone className="h-5 w-5" />
                       </Button>
@@ -247,7 +260,7 @@ const SharedChatPage = () => {
                 </div>
 
                 <div className="flex-1 overflow-auto">
-                  <div className="max-w-4xl mx-auto px-6 pb-6">
+                  <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-6">
                     {messagesLoading ? (
                       <div className="flex items-center justify-center py-20">
                         <div className="flex flex-col items-center gap-3">
@@ -262,7 +275,7 @@ const SharedChatPage = () => {
 
                           return (
                             <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                              <div className={`max-w-[75%] ${mine ? 'flex flex-col items-end' : 'flex flex-col items-start'}`}>
+                              <div className={`max-w-[88%] sm:max-w-[75%] ${mine ? 'flex flex-col items-end' : 'flex flex-col items-start'}`}>
                                 <div
                                   className={`rounded-2xl px-5 py-3 shadow-sm ${
                                     mine
@@ -311,7 +324,7 @@ const SharedChatPage = () => {
                       <Button
                         onClick={handleSend}
                         disabled={!draft.trim() || sendMessage.isPending}
-                        className="px-6 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 sm:px-6 h-12 rounded-xl bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                       >
                         {sendMessage.isPending ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent" />
