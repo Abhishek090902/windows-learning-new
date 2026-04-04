@@ -1,4 +1,6 @@
 import prisma from '../../config/db.js';
+import jwt from 'jsonwebtoken';
+import config from '../../config/env.js';
 
 export const getAllUsers = async () => {
   return await prisma.user.findMany({
@@ -81,6 +83,50 @@ export const updateUserProfile = async (userId, data) => {
       wallet: true,
     },
   });
+};
+
+export const switchUserRole = async (userId, nextRole) => {
+  if (!['LEARNER', 'MENTOR'].includes(nextRole)) {
+    throw new Error('Invalid role selected');
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      learnerProfile: true,
+      mentorProfile: true,
+      wallet: true,
+    },
+  });
+
+  if (!user) throw new Error('User not found');
+  if (user.role === 'ADMIN') throw new Error('Admin role cannot be switched');
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      role: nextRole,
+      ...(nextRole === 'LEARNER' && !user.learnerProfile
+        ? { learnerProfile: { create: {} } }
+        : {}),
+      ...(nextRole === 'MENTOR' && !user.mentorProfile
+        ? { mentorProfile: { create: { hourlyRate: 0 } } }
+        : {}),
+    },
+    include: {
+      learnerProfile: { include: { skills: { include: { skill: true } } } },
+      mentorProfile: { include: { skills: { include: { skill: true } } } },
+      wallet: true,
+    },
+  });
+
+  const token = jwt.sign(
+    { userId: updatedUser.id, role: updatedUser.role },
+    config.jwtSecret,
+    { expiresIn: '1h' },
+  );
+
+  return { user: updatedUser, token };
 };
 
 // ─── Admin: all mentors with computed fields ──────────────────────────────────

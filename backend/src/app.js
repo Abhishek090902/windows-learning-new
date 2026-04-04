@@ -18,6 +18,7 @@ import chatRoutes from './modules/chat/chat.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
 import mentorProfileRoutes from './routes/mentorProfileRoutes.js';
 import reviewSystemRoutes from './routes/reviewRoutes.js';
+import meetingRoutes from './routes/meetings.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,7 +28,13 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(morgan('dev'));
-app.use(express.json());
+app.use(express.json({
+  verify: (req, _res, buf) => {
+    if (buf?.length) {
+      req.rawBody = buf.toString('utf8');
+    }
+  },
+}));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // API Versioning - v1
@@ -37,6 +44,7 @@ app.use(`${API_V1}/auth`, authRoutes);
 app.use(`${API_V1}/users`, userRoutes);
 app.use(`${API_V1}/mentors`, mentorRoutes);
 app.use(`${API_V1}/sessions`, sessionRoutes);
+app.use(`${API_V1}/sessions`, meetingRoutes);
 app.use(`${API_V1}/wallet`, walletRoutes);
 app.use(`${API_V1}/requirements`, requirementRoutes);
 app.use(`${API_V1}/proposals`, proposalRoutes);

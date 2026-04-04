@@ -1,23 +1,45 @@
-import { createNotification } from '../../modules/notifications/notification.service.js';
+import prisma from '../../config/db.js';
 
-const notificationHandler = (io, socket) => {
-  // This handler is mostly for listening to events from other parts of the app
-  // and emitting them to the correct user.
+const notificationHandler = (_io, socket) => {
+  socket.on('notifications:subscribe', () => {
+    socket.join(`notifications:${socket.userId}`);
+  });
 
-  // Example of how another service would trigger a notification:
-  // const io = app.get('io');
-  // io.to(`user:${userId}`).emit('new_notification', notificationData);
-
-  socket.on('get_notifications', async () => {
+  socket.on('notifications:get_unread_count', async () => {
     try {
-      const notifications = await prisma.notification.findMany({
-        where: { userId: socket.userId },
-        orderBy: { createdAt: 'desc' },
-        take: 20
+      const unreadCount = await prisma.notification.count({
+        where: {
+          userId: socket.userId,
+          isRead: false,
+          isActive: true,
+        },
       });
-      socket.emit('notifications', notifications);
+
+      socket.emit('notifications:unread_count', { unreadCount });
     } catch (error) {
-      socket.emit('error', { message: 'Failed to get notifications' });
+      console.error('Error getting unread notification count:', error);
+      socket.emit('error', { message: 'Failed to load notifications' });
+    }
+  });
+
+  socket.on('notifications:mark_all_read', async () => {
+    try {
+      await prisma.notification.updateMany({
+        where: {
+          userId: socket.userId,
+          isRead: false,
+          isActive: true,
+        },
+        data: {
+          isRead: true,
+        },
+      });
+
+      socket.emit('notifications:all_read');
+      socket.emit('new_notification', { unreadCount: 0 });
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+      socket.emit('error', { message: 'Failed to update notifications' });
     }
   });
 };

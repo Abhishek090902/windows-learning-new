@@ -9,6 +9,7 @@ const router = express.Router();
 
 router.get('/me', protect, userController.getMe);
 router.patch('/profile', protect, userController.updateProfile);
+router.post('/switch-role', protect, userController.switchRole);
 router.post('/profile-picture', protect, upload.single('profilePicture'), userController.uploadProfilePicture);
 
 // Admin routes

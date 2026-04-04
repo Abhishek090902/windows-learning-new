@@ -62,16 +62,19 @@ export const updateMentorAvailability = async (userId, availabilityData) => {
   if (!mentor) throw new Error('Mentor profile not found');
 
   const { schedule } = availabilityData;
+  const normalizedSchedule = Object.fromEntries(
+    Object.entries(schedule || {}).map(([day, data]) => [
+      day.toLowerCase(),
+      data?.active && data?.start && data?.end ? [`${data.start}-${data.end}`] : [],
+    ])
+  );
 
-  const availabilityPromises = Object.entries(schedule).map(([day, data]) => {
-    return prisma.mentorAvailability.upsert({
-      where: { mentorId_day: { mentorId: mentor.id, day } },
-      create: { mentorId: mentor.id, day, startTime: data.start, endTime: data.end, isAvailable: data.active },
-      update: { startTime: data.start, endTime: data.end, isAvailable: data.active },
-    });
+  return await prisma.mentorProfile.update({
+    where: { id: mentor.id },
+    data: {
+      weeklySchedule: normalizedSchedule,
+    },
   });
-
-  return await Promise.all(availabilityPromises);
 };
 
 export const saveMentor = async (userId, mentorId) => {

@@ -33,6 +33,15 @@ export const updateProfile = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+export const switchRole = async (req, res, next) => {
+  try {
+    const { role } = req.body;
+    const result = await userService.switchUserRole(req.user.userId, role);
+    emitDataUpdate(req.app.get('io'), req.user.userId, 'user');
+    return sendSuccess(res, result, 'Role switched successfully');
+  } catch (error) { next(error); }
+};
+
 export const uploadProfilePicture = async (req, res, next) => {
   try {
     if (!req.file) { const e = new Error('Please upload a file'); e.statusCode = 400; throw e; }

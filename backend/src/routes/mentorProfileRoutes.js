@@ -42,12 +42,12 @@ const upload = multer({
 
 // Public routes
 router.get('/search', searchMentors);
-router.get('/:id', getMentorProfile);
 
 // Protected routes
 router.get('/my/profile', protect, getMyMentorProfile);
 router.post('/', protect, createMentorProfile);
-router.put('/:id', protect, updateMentorProfile);
 router.post('/upload', protect, upload.single('file'), uploadFile);
+router.put('/:id', protect, updateMentorProfile);
+router.get('/:id', getMentorProfile);
 
 export default router;

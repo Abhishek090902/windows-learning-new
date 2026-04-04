@@ -8,9 +8,18 @@
 export const emitDataUpdate = (io, userIds, dataType, payload = {}) => {
   if (!io) return;
 
+  if (!userIds) {
+    io.emit('data_update', {
+      type: dataType,
+      ...payload,
+      timestamp: new Date()
+    });
+    return;
+  }
+
   const ids = Array.isArray(userIds) ? userIds : [userIds];
   
-  ids.forEach(userId => {
+  ids.filter(Boolean).forEach(userId => {
     io.to(`user:${userId}`).emit('data_update', {
       type: dataType,
       ...payload,

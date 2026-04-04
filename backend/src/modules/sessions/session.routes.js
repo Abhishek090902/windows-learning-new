@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/', protect, authorize('LEARNER'), sessionController.bookSession);
 router.get('/learner', protect, authorize('LEARNER'), sessionController.getLearnerSessions);
 router.get('/mentor', protect, authorize('MENTOR'), sessionController.getMentorSessions);
+router.patch('/:id/status', protect, sessionController.updateSessionStatus);
 router.delete('/:id', protect, sessionController.cancelSession);
 
 export default router;

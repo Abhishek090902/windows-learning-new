@@ -16,17 +16,21 @@ export const bookSession = async (req, res, next) => {
     );
 
     const io = req.app.get('io');
+    const mentorUserId = session.mentor.user.id;
+    const learnerUserId = session.learner.user.id;
     
     // Emit notification
-    const notification = await createNotification(mentorId, 'SESSION_REQUEST', `New session request from learner`);
-    io.to(`user:${mentorId}`).emit('new_notification', notification);
+    const notification = await createNotification(
+      mentorUserId,
+      'SESSION_REQUEST',
+      'New session request from learner'
+    );
+    io.to(`user:${mentorUserId}`).emit('new_notification', notification);
 
     // Real-time sync for both parties
-    emitDataUpdate(io, [req.user.userId, mentorId], 'sessions');
-    // Also sync wallet for learner as funds might be locked/deducted
-    emitDataUpdate(io, req.user.userId, 'wallet');
+    emitDataUpdate(io, [learnerUserId, mentorUserId], 'sessions');
 
-    return sendSuccess(res, session, 'Session booked successfully', 201);
+    return sendSuccess(res, session, 'Session request sent successfully', 201);
   } catch (error) {
     next(error);
   }
@@ -52,13 +56,95 @@ export const getMentorSessions = async (req, res, next) => {
 
 export const cancelSession = async (req, res, next) => {
   try {
+    const existingSession = await sessionService.getSessionById(req.params.id);
+    if (!existingSession) {
+      const error = new Error('Session not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const actorId = req.user.userId;
+    const canCancel = actorId === existingSession.learner.user.id || actorId === existingSession.mentor.user.id;
+    if (!canCancel) {
+      const error = new Error('You are not allowed to cancel this session');
+      error.statusCode = 403;
+      throw error;
+    }
+
     const session = await sessionService.updateSessionStatus(req.params.id, 'CANCELLED');
     
     const io = req.app.get('io');
-    // Notify both parties (need to get learner and mentor IDs from session)
-    emitDataUpdate(io, [session.learnerId, session.mentorId], 'sessions');
+    emitDataUpdate(io, [session.learner.user.id, session.mentor.user.id], 'sessions');
+    emitDataUpdate(io, [session.learner.user.id, session.mentor.user.id], 'analytics');
+
+    const recipientId = actorId === session.learner.user.id ? session.mentor.user.id : session.learner.user.id;
+    const notification = await createNotification(recipientId, 'SESSION_CANCELLED', 'A session was cancelled');
+    io.to(`user:${recipientId}`).emit('new_notification', notification);
     
     return sendSuccess(res, session, 'Session cancelled successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateSessionStatus = async (req, res, next) => {
+  try {
+    const nextStatus = req.body.status;
+    const existingSession = await sessionService.getSessionById(req.params.id);
+    if (!existingSession) {
+      const error = new Error('Session not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const actorId = req.user.userId;
+    const isMentor = actorId === existingSession.mentor.user.id;
+    const isLearner = actorId === existingSession.learner.user.id;
+
+    if (!isMentor && !isLearner) {
+      const error = new Error('You are not allowed to update this session');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    if (nextStatus === 'CONFIRMED' && !isMentor) {
+      const error = new Error('Only the mentor can accept this session');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    if (nextStatus === 'COMPLETED' && !isMentor) {
+      const error = new Error('Only the mentor can complete this session');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    if (nextStatus === 'CANCELLED' && !isMentor && !isLearner) {
+      const error = new Error('Only session participants can cancel this session');
+      error.statusCode = 403;
+      throw error;
+    }
+
+    const session = await sessionService.updateSessionStatus(req.params.id, nextStatus);
+    const io = req.app.get('io');
+
+    emitDataUpdate(io, [session.learner.user.id, session.mentor.user.id], 'sessions');
+    emitDataUpdate(io, [session.learner.user.id, session.mentor.user.id], 'wallet');
+    emitDataUpdate(io, [session.learner.user.id, session.mentor.user.id], 'analytics');
+
+    let notification = null;
+    if (nextStatus === 'CONFIRMED') {
+      notification = await createNotification(session.learner.user.id, 'SESSION_CONFIRMED', 'Your mentor accepted the session request');
+      io.to(`user:${session.learner.user.id}`).emit('new_notification', notification);
+    }
+
+    if (nextStatus === 'CANCELLED') {
+      const recipientId = actorId === session.learner.user.id ? session.mentor.user.id : session.learner.user.id;
+      notification = await createNotification(recipientId, 'SESSION_CANCELLED', 'A session was cancelled');
+      io.to(`user:${recipientId}`).emit('new_notification', notification);
+    }
+
+    return sendSuccess(res, session, 'Session status updated successfully');
   } catch (error) {
     next(error);
   }

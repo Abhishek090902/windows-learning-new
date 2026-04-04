@@ -1,5 +1,6 @@
 import * as mentorService from './mentor.service.js';
 import { sendSuccess } from '../../utils/responseHandler.js';
+import { emitDataUpdate } from '../../utils/socketEmitter.js';
 
 export const getMentors = async (req, res, next) => {
   try {
@@ -27,6 +28,9 @@ export const getMentor = async (req, res, next) => {
 export const updateAvailability = async (req, res, next) => {
   try {
     const availability = await mentorService.updateMentorAvailability(req.user.userId, req.body);
+    const io = req.app.get('io');
+    emitDataUpdate(io, req.user.userId, 'profile');
+    emitDataUpdate(io, null, 'mentors');
     return sendSuccess(res, availability, 'Availability updated successfully');
   } catch (error) {
     next(error);

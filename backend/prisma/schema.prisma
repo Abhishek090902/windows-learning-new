@@ -21,6 +21,7 @@ enum Role {
 
 enum SessionStatus {
   PENDING
+  ONGOING
   CONFIRMED
   COMPLETED
   CANCELLED
@@ -31,6 +32,41 @@ enum TransactionType {
   WITHDRAWAL
   PAYMENT
   REFUND
+  PAYOUT
+  ESCROW_HOLD
+  ESCROW_RELEASE
+  ESCROW_REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  HELD
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REVERSED
+}
+
+enum PaymentProvider {
+  INTERNAL
+  STRIPE
+  RAZORPAY
+  MANUAL
+}
+
+enum PaymentMethodType {
+  CARD
+  UPI
+  NETBANKING
+  BANK_ACCOUNT
+}
+
+enum SessionFundsStatus {
+  NONE
+  HELD
+  RELEASED
+  REFUNDED
 }
 
 enum NotificationType {
@@ -71,6 +107,8 @@ model User {
   notificationSetting NotificationSetting?
   reports             Report[]
   wallet              Wallet?
+  paymentMethods      PaymentMethod[]
+  payoutMethods       PayoutMethod[]
   auditLogs           AuditLog[]
 
   @@index([email])
@@ -254,7 +292,13 @@ model Session {
   topic       String?
   amount      Decimal        @default(0) @db.Decimal(10, 2)
   meetingLink String?
+  meetingUrl  String?        @map("meeting_url")
+  meetingRoomName String?    @map("meeting_room_name")
+  meetingRecordingUrl String? @map("meeting_recording_url")
+  meetingStartedAt DateTime? @map("meeting_started_at")
+  meetingEndedAt DateTime?   @map("meeting_ended_at")
   status      SessionStatus  @default(PENDING)
+  fundsStatus SessionFundsStatus @default(NONE)
   isActive    Boolean        @default(true)
   deletedAt   DateTime?
   notes       SessionNote[]
@@ -363,6 +407,7 @@ model Wallet {
   user         User          @relation(fields: [userId], references: [id])
   userId       String        @unique
   balance      Decimal       @default(0) @db.Decimal(10, 2)
+  heldBalance  Decimal       @default(0) @db.Decimal(10, 2)
   isActive     Boolean       @default(true)
   deletedAt    DateTime?
   transactions Transaction[]
@@ -374,21 +419,85 @@ model Wallet {
 }
 
 model Transaction {
-  id          String          @id @default(cuid())
-  wallet      Wallet          @relation(fields: [walletId], references: [id])
-  walletId    String
-  amount      Decimal         @db.Decimal(10, 2)
-  type        TransactionType
-  description String?
-  referenceId String?
-  isActive    Boolean         @default(true)
-  deletedAt   DateTime?
-  createdAt   DateTime        @default(now())
+  id                 String            @id @default(cuid())
+  wallet             Wallet            @relation(fields: [walletId], references: [id])
+  walletId           String
+  amount             Decimal           @db.Decimal(10, 2)
+  type               TransactionType
+  status             TransactionStatus @default(PENDING)
+  provider           PaymentProvider   @default(INTERNAL)
+  paymentMethodType  PaymentMethodType?
+  currency           String            @default("INR")
+  description        String?
+  referenceId        String?
+  externalReference  String?
+  gatewayOrderId     String?
+  gatewayPaymentId   String?
+  gatewayPayoutId    String?
+  paymentMethodLabel String?
+  metadata           Json?
+  availableBalanceAfter Decimal        @default(0) @db.Decimal(10, 2)
+  heldBalanceAfter      Decimal        @default(0) @db.Decimal(10, 2)
+  processedAt        DateTime?
+  isActive           Boolean          @default(true)
+  deletedAt          DateTime?
+  createdAt          DateTime         @default(now())
 
   @@index([walletId])
   @@index([type])
+  @@index([status])
+  @@index([provider])
   @@index([createdAt])
   @@index([isActive])
+  @@index([referenceId])
+  @@index([externalReference])
+}
+
+model PaymentMethod {
+  id                String            @id @default(cuid())
+  user              User              @relation(fields: [userId], references: [id])
+  userId            String
+  provider          PaymentProvider
+  type              PaymentMethodType
+  label             String
+  brand             String?
+  last4             String?
+  token             String?
+  gatewayCustomerId String?
+  isDefault         Boolean           @default(false)
+  metadata          Json?
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([provider])
+  @@index([type])
+  @@index([isDefault])
+}
+
+model PayoutMethod {
+  id                String            @id @default(cuid())
+  user              User              @relation(fields: [userId], references: [id])
+  userId            String
+  provider          PaymentProvider   @default(MANUAL)
+  type              PaymentMethodType
+  label             String
+  accountHolderName String?
+  bankName          String?
+  accountNumberLast4 String?
+  ifscCode          String?
+  upiId             String?
+  token             String?
+  isDefault         Boolean           @default(false)
+  metadata          Json?
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([isDefault])
 }
 
 model Conversation {
