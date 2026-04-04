@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
+import {
+  createSessionViaEdge,
+  getMySessionsViaEdge,
+  updateSessionStatusViaEdge,
+} from '@/lib/supabaseEdgeApi';
+
+const shouldUseEdgeSessions = import.meta.env.VITE_USE_SUPABASE_EDGE_SESSIONS === 'true';
 
 // Mentors
 export const useMentors = (filters: any = {}) => {
@@ -85,6 +92,11 @@ export const useLearnerSessions = () => {
   return useQuery({
     queryKey: ['sessions', 'learner'],
     queryFn: async () => {
+      if (shouldUseEdgeSessions) {
+        const response = await getMySessionsViaEdge();
+        return response.data;
+      }
+
       const response = await api.get('/sessions/learner');
       return response.data.data;
     },
@@ -95,6 +107,11 @@ export const useMentorSessions = () => {
   return useQuery({
     queryKey: ['sessions', 'mentor'],
     queryFn: async () => {
+      if (shouldUseEdgeSessions) {
+        const response = await getMySessionsViaEdge();
+        return response.data;
+      }
+
       const response = await api.get('/sessions/mentor');
       return response.data.data;
     },
@@ -105,6 +122,11 @@ export const useBookSession = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
+      if (shouldUseEdgeSessions) {
+        const response = await createSessionViaEdge(data);
+        return response.data;
+      }
+
       const response = await api.post('/sessions', data);
       return response.data.data;
     },
@@ -130,6 +152,11 @@ export const useUpdateSessionStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ sessionId, status }: { sessionId: string; status: string }) => {
+      if (shouldUseEdgeSessions) {
+        const response = await updateSessionStatusViaEdge({ sessionId, status });
+        return response.data;
+      }
+
       const response = await api.patch(`/sessions/${sessionId}/status`, { status });
       return response.data.data;
     },

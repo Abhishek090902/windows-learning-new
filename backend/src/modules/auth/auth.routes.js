@@ -8,5 +8,6 @@ const router = express.Router();
 router.post('/register', validate(registerSchema), authController.register);
 router.post('/login', validate(loginSchema), authController.login);
 router.post('/google', authController.googleLogin);
+router.post('/supabase/sync', authController.syncSupabaseSession);
 
 export default router;

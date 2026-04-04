@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -41,19 +42,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const syncSupabaseUser = async (authToken: string) => {
+    api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    await api.post('/auth/supabase/sync');
+  };
+
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedToken) {
-      setToken(storedToken);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const accessToken = data.session?.access_token || null;
+        const storedUser = localStorage.getItem('user');
+
+        if (accessToken) {
+          setToken(accessToken);
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
+          await syncSupabaseUser(accessToken);
+          await fetchUserProfile(accessToken);
+        }
+      } catch (error) {
+        console.error('Failed to initialize Supabase auth:', error);
+        logout();
+      } finally {
+        if (mounted) setIsLoading(false);
       }
-      fetchUserProfile(storedToken).finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
+    };
+
+    initializeAuth();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const accessToken = session?.access_token || null;
+
+      if (!accessToken) {
+        logout();
+        setIsLoading(false);
+        return;
+      }
+
+      setToken(accessToken);
+      localStorage.setItem('token', accessToken);
+
+      syncSupabaseUser(accessToken)
+        .then(() => fetchUserProfile(accessToken))
+        .finally(() => setIsLoading(false));
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = (userData: User, authToken: string) => {
@@ -65,6 +108,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
+    if (token) {
+      supabase.auth.signOut().catch(() => {});
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);

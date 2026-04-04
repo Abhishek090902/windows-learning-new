@@ -1,6 +1,4 @@
 import prisma from '../../config/db.js';
-import jwt from 'jsonwebtoken';
-import config from '../../config/env.js';
 
 export const getAllUsers = async () => {
   return await prisma.user.findMany({
@@ -120,13 +118,7 @@ export const switchUserRole = async (userId, nextRole) => {
     },
   });
 
-  const token = jwt.sign(
-    { userId: updatedUser.id, role: updatedUser.role },
-    config.jwtSecret,
-    { expiresIn: '1h' },
-  );
-
-  return { user: updatedUser, token };
+  return { user: updatedUser, token: null };
 };
 
 // ─── Admin: all mentors with computed fields ──────────────────────────────────

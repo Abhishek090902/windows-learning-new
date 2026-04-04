@@ -1,0 +1,19 @@
+project_id = "windows-learning"
+
+[functions.auth-sync]
+verify_jwt = true
+
+[functions.me]
+verify_jwt = true
+
+[functions.sessions]
+verify_jwt = true
+
+[functions.chat]
+verify_jwt = true
+
+[functions.wallet]
+verify_jwt = true
+
+[functions.mentors]
+verify_jwt = true

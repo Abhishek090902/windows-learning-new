@@ -1,5 +1,6 @@
 import * as authService from './auth.service.js';
 import { sendSuccess } from '../../utils/responseHandler.js';
+import { getSupabaseIdentity } from './supabase-auth.service.js';
 
 export const register = async (req, res, next) => {
   try {
@@ -36,6 +37,33 @@ export const googleLogin = async (req, res, next) => {
   } catch (error) {
     error.statusCode = 401;
     error.message = 'Google login failed';
+    next(error);
+  }
+};
+
+export const syncSupabaseSession = async (req, res, next) => {
+  try {
+    const bearer = req.headers.authorization;
+    const token = bearer?.startsWith('Bearer ') ? bearer.split(' ')[1] : null;
+
+    if (!token) {
+      const error = new Error('Supabase session token is required');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const identity = await getSupabaseIdentity(token);
+    if (!identity) {
+      const error = new Error('Invalid Supabase session');
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const { user } = await authService.syncSupabaseAuthUser(identity);
+    const { password, ...userWithoutPassword } = user;
+
+    return sendSuccess(res, { user: userWithoutPassword, token }, 'Supabase user synced successfully');
+  } catch (error) {
     next(error);
   }
 };

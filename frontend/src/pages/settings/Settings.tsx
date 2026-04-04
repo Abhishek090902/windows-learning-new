@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { appRoutes, getRoleSwitchTarget } from '@/lib/appRoutes';
 import { getDefaultAuthenticatedRoute } from '@/lib/userRouting';
 import { useSwitchRole } from '@/hooks/useApi';
+import { supabase } from '@/lib/supabase';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -111,7 +112,14 @@ const SettingsPage = () => {
 
     try {
       const response = await switchRole.mutateAsync(nextRole);
-      login(response.user, response.token);
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error('Supabase session is missing after role switch.');
+      }
+
+      login(response.user, accessToken);
       toast({
         title: `Switched to ${nextRole === 'MENTOR' ? 'Mentor' : 'Learner'}`,
         description: nextRole === 'MENTOR'

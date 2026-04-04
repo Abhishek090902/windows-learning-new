@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import config from '../../config/env.js';
 import { OAuth2Client } from 'google-auth-library';
+import { syncSupabaseUser } from './supabase-auth.service.js';
 
 const googleClient = new OAuth2Client();
 
@@ -138,4 +139,13 @@ export const googleLoginUser = async (accessToken, role = 'LEARNER') => {
   );
 
   return { user, token };
+};
+
+export const syncSupabaseAuthUser = async (identity) => {
+  const user = await syncSupabaseUser(identity);
+
+  return {
+    user,
+    token: null,
+  };
 };
