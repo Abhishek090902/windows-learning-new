@@ -29,9 +29,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const applyAuthToken = (authToken: string) => {
+    setToken(authToken);
+    localStorage.setItem('token', authToken);
+    api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+  };
+
   const fetchUserProfile = async (authToken: string) => {
     try {
-      api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+      applyAuthToken(authToken);
       const response = await api.get('/users/me');
       const userData = response.data.data;
       setUser(userData);
@@ -43,7 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const syncSupabaseUser = async (authToken: string) => {
-    api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
+    applyAuthToken(authToken);
     await api.post('/auth/supabase/sync');
   };
 
@@ -54,15 +60,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const { data } = await supabase.auth.getSession();
         const accessToken = data.session?.access_token || null;
+        const storedToken = localStorage.getItem('token');
         const storedUser = localStorage.getItem('user');
 
         if (accessToken) {
-          setToken(accessToken);
           if (storedUser) {
             setUser(JSON.parse(storedUser));
           }
           await syncSupabaseUser(accessToken);
           await fetchUserProfile(accessToken);
+        } else if (storedToken) {
+          applyAuthToken(storedToken);
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
+          await fetchUserProfile(storedToken);
         }
       } catch (error) {
         console.error('Failed to initialize Supabase auth:', error);
@@ -78,15 +90,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const accessToken = session?.access_token || null;
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
 
       if (!accessToken) {
-        logout();
+        if (storedToken) {
+          applyAuthToken(storedToken);
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
+        }
         setIsLoading(false);
         return;
       }
-
-      setToken(accessToken);
-      localStorage.setItem('token', accessToken);
 
       syncSupabaseUser(accessToken)
         .then(() => fetchUserProfile(accessToken))
@@ -100,11 +116,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (userData: User, authToken: string) => {
-    localStorage.setItem('token', authToken);
+    applyAuthToken(authToken);
     localStorage.setItem('user', JSON.stringify(userData));
-    setToken(authToken);
     setUser(userData);
-    api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
   };
 
   const logout = () => {
