@@ -10,9 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { appRoutes, getRoleSwitchTarget } from '@/lib/appRoutes';
+import { getAssetUrl } from '@/lib/runtime-config';
 import { getDefaultAuthenticatedRoute } from '@/lib/userRouting';
 import { useSwitchRole } from '@/hooks/useApi';
 import { supabase } from '@/lib/supabase';
+
+const getUploadUrl = (path?: string | null) => getAssetUrl(path);
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -254,15 +257,3 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
-  const getUploadUrl = (path?: string | null) => {
-    if (!path) return '';
-    if (/^https?:\/\//i.test(path)) return path;
-
-    const apiBase = import.meta.env.VITE_API_URL || '';
-
-    try {
-      return apiBase ? new URL(path, apiBase).toString() : path;
-    } catch {
-      return path;
-    }
-  };

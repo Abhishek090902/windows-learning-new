@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import api from '@/lib/api';
+import { getAssetUrl } from '@/lib/runtime-config';
 import { useToast } from '@/components/ui/use-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -68,15 +69,7 @@ const initials = (name: string) =>
   name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 const assetUrl = (path?: string | null) => {
   if (!path) return undefined;
-  if (/^https?:\/\//i.test(path)) return path;
-
-  const apiBase = import.meta.env.VITE_API_URL || '';
-
-  try {
-    return apiBase ? new URL(path, apiBase).toString() : path;
-  } catch {
-    return path;
-  }
+  return getAssetUrl(path);
 };
 
 const defaultStats: Stats = {
