@@ -10,6 +10,7 @@
     "lint": "npx prisma validate && node --check src/server.js",
     "test": "node -e \"process.exit(0)\"",
     "prisma:generate": "npx prisma generate",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:reset": "npx prisma migrate reset"
   },
@@ -26,13 +27,13 @@
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "openai": "^6.33.0",
+    "prisma": "^5.22.0",
     "razorpay": "^2.9.6",
     "socket.io": "^4.8.1",
     "stripe": "^18.3.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7",
-    "prisma": "^5.22.0"
+    "nodemon": "^3.1.7"
   }
 }

@@ -133,27 +133,63 @@ ALTER COLUMN "hourlyRate" SET DATA TYPE DECIMAL(10,2);
 ALTER TABLE "MentorSkill" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 ADD COLUMN     "proficiency" INTEGER DEFAULT 1;
 
+-- Re-add conversationId after it was removed in a previous migration.
+ALTER TABLE "Message" ADD COLUMN     "conversationId" TEXT;
+
 -- Create conversations for existing messages first
+WITH message_groups AS (
+    SELECT
+        "senderId",
+        "receiverId",
+        MIN("createdAt") AS "firstCreatedAt"
+    FROM "Message"
+    GROUP BY "senderId", "receiverId"
+)
 INSERT INTO "Conversation" ("id", "isActive", "createdAt", "updatedAt")
-SELECT gen_random_uuid()::text, true, MIN("createdAt"), CURRENT_TIMESTAMP
-FROM "Message"
-GROUP BY "senderId", "receiverId";
+SELECT gen_random_uuid()::text, true, "firstCreatedAt", CURRENT_TIMESTAMP
+FROM message_groups;
 
 -- Update messages to reference conversations
 UPDATE "Message" m
-SET "conversationId" = c."id"
+SET "conversationId" = sub."conversationId"
 FROM (
-    SELECT 
-        "senderId", 
-        "receiverId", 
-        MIN("id") as "min_id",
-        (SELECT id FROM "Conversation" ORDER BY "createdAt" LIMIT 1) as "conversationId"
-    FROM "Message" 
-    GROUP BY "senderId", "receiverId"
+    SELECT
+        grouped."senderId",
+        grouped."receiverId",
+        conversations."id" AS "conversationId"
+    FROM (
+        SELECT
+            "senderId",
+            "receiverId",
+            MIN("createdAt") AS "firstCreatedAt",
+            ROW_NUMBER() OVER (ORDER BY MIN("createdAt"), "senderId", "receiverId") AS "rowNum"
+        FROM "Message"
+        GROUP BY "senderId", "receiverId"
+    ) grouped
+    JOIN (
+        SELECT
+            "id",
+            "createdAt",
+            ROW_NUMBER() OVER (ORDER BY "createdAt", "id") AS "rowNum"
+        FROM "Conversation"
+    ) conversations
+        ON grouped."rowNum" = conversations."rowNum"
 ) sub
 WHERE m."senderId" = sub."senderId" 
-AND m."receiverId" = sub."receiverId"
-AND m."id" = sub."min_id";
+AND m."receiverId" = sub."receiverId";
+
+-- Add conversation participants for existing message history
+INSERT INTO "ConversationUser" ("conversationId", "userId", "lastReadAt", "isActive", "createdAt")
+SELECT DISTINCT "conversationId", "participantId", CURRENT_TIMESTAMP, true, CURRENT_TIMESTAMP
+FROM (
+    SELECT "conversationId", "senderId" AS "participantId"
+    FROM "Message"
+    WHERE "conversationId" IS NOT NULL
+    UNION
+    SELECT "conversationId", "receiverId" AS "participantId"
+    FROM "Message"
+    WHERE "conversationId" IS NOT NULL
+) participants;
 
 -- AlterTable
 ALTER TABLE "Message" ADD COLUMN     "deletedAt" TIMESTAMP(3),
