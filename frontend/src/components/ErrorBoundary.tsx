@@ -1,7 +1,6 @@
 import React from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
+import AppStatusPage from '@/components/status/AppStatusPage';
 
 interface Props {
   children: React.ReactNode;
@@ -36,30 +35,24 @@ export class ErrorBoundary extends React.Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <Card className="m-6">
-          <CardContent className="p-10 text-center">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Something went wrong</h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-              We had trouble loading this section. Your data is safe — try refreshing.
-            </p>
-            {this.state.error && (
-              <p className="text-xs text-muted-foreground bg-muted rounded p-2 mb-4 font-mono text-left break-all">
-                {this.state.error.message}
-              </p>
-            )}
-            <div className="flex gap-3 justify-center">
-              <Button onClick={this.handleReset} variant="outline" className="gap-2">
-                <RefreshCw className="h-4 w-4" /> Try Again
-              </Button>
-              <Button onClick={() => window.location.reload()}>
-                Reload Page
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <AppStatusPage
+          code="500"
+          badge="Unexpected Error"
+          title="This section hit a runtime problem."
+          description="Something failed while rendering the page. Your data is likely still safe, and a refresh or retry usually gets things back on track."
+          accentClass="bg-[radial-gradient(circle,rgba(244,63,94,0.24),rgba(255,255,255,0))]"
+          icon={<AlertTriangle className="h-7 w-7" />}
+          details={
+            this.state.error ? (
+              <>
+                <span className="font-medium text-slate-900">Technical detail:</span>{' '}
+                <span className="font-mono text-[13px] break-all">{this.state.error.message}</span>
+              </>
+            ) : undefined
+          }
+          primaryAction={{ label: 'Try Again', onClick: this.handleReset }}
+          secondaryAction={{ label: 'Reload Page', onClick: () => window.location.reload() }}
+        />
       );
     }
 

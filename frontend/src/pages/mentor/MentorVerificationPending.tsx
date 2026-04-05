@@ -1,10 +1,28 @@
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Edit, HelpCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const MentorVerificationPending = () => {
+  const { refreshUser } = useAuth();
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+
+  const handleCheckStatus = useCallback(async () => {
+    setIsCheckingStatus(true);
+    try {
+      await refreshUser();
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  }, [refreshUser]);
+
+  useEffect(() => {
+    void handleCheckStatus();
+  }, [handleCheckStatus]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -30,7 +48,10 @@ const MentorVerificationPending = () => {
             <Link to="/mentor/profile/edit" className="flex-1">
               <Button variant="outline" className="w-full gap-2"><Edit className="h-4 w-4" /> Edit Profile</Button>
             </Link>
-            <Button variant="outline" className="flex-1 gap-2"><RefreshCw className="h-4 w-4" /> Check Status</Button>
+            <Button variant="outline" className="flex-1 gap-2" onClick={handleCheckStatus} disabled={isCheckingStatus}>
+              <RefreshCw className={`h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+              {isCheckingStatus ? 'Checking...' : 'Check Status'}
+            </Button>
           </div>
           <Link to="/help" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
             <HelpCircle className="h-4 w-4" /> Need help? Contact Support

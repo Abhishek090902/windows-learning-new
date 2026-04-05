@@ -35,7 +35,7 @@ export const getMentorProposals = async (req, res, next) => {
 
 export const acceptProposal = async (req, res, next) => {
   try {
-    const result = await proposalService.acceptProposal(req.params.id);
+    const result = await proposalService.acceptProposal(req.params.id, req.user.userId);
     const io = req.app.get('io');
     const mentorUserId = result.proposal.mentor.user.id;
     const learnerUserId = result.proposal.requirement.learner.user.id;
@@ -58,7 +58,7 @@ export const acceptProposal = async (req, res, next) => {
 
 export const rejectProposal = async (req, res, next) => {
   try {
-    const proposal = await proposalService.rejectProposal(req.params.id);
+    const proposal = await proposalService.rejectProposal(req.params.id, req.user.userId);
     const io = req.app.get('io');
     const mentorUserId = proposal.mentor.user.id;
     const learnerUserId = proposal.requirement.learner.user.id;

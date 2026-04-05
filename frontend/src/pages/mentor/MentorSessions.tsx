@@ -112,7 +112,11 @@ const MentorSessions = () => {
                         <Button size="sm" className="gap-1" onClick={() => setActiveMeetingSessionId(session.id)}><Video className="h-3 w-3" /> Join Session</Button>
                       )}
                       <Link to={getChatRoute(session.learner?.user?.id || session.learnerId)}><Button size="sm" variant="outline" className="gap-1">Chat</Button></Link>
-                      <Link to="/support/ticket"><Button size="sm" variant="outline"><RotateCcw className="h-3 w-3" /></Button></Link>
+                      <Link to="/support/ticket">
+                        <Button size="sm" variant="outline" className="gap-1">
+                          <RotateCcw className="h-3 w-3" /> Reschedule
+                        </Button>
+                      </Link>
                     </div>
                   )}
                   {tab === 'past' && session.review && (

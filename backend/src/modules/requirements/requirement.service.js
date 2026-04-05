@@ -7,6 +7,10 @@ export const createRequirement = async (learnerId, data) => {
     include: { learnerProfile: true }
   });
 
+  if (!user?.learnerProfile) {
+    throw new Error('Learner profile not found');
+  }
+
   return await prisma.learnerRequirement.create({
     data: {
       learnerId: user.learnerProfile.id,
@@ -19,6 +23,7 @@ export const createRequirement = async (learnerId, data) => {
 
 export const getAllRequirements = async () => {
   return await prisma.learnerRequirement.findMany({
+    where: { isActive: true },
     include: {
       learner: { include: { user: { select: { name: true } } } },
       _count: { select: { proposals: true } }
@@ -27,18 +32,91 @@ export const getAllRequirements = async () => {
   });
 };
 
-export const getRequirementById = async (id) => {
-  return await prisma.learnerRequirement.findUnique({
+export const getRequirementById = async (id, viewer = null) => {
+  const requirement = await prisma.learnerRequirement.findUnique({
     where: { id },
     include: {
-      learner: { include: { user: { select: { name: true } } } },
-      proposals: {
-        include: { mentor: { include: { user: { select: { name: true } } } } }
-      }
-    }
+      learner: { include: { user: { select: { id: true, name: true } } } },
+      _count: { select: { proposals: true } },
+    },
   });
+
+  if (!requirement) {
+    return null;
+  }
+
+  if (!viewer?.userId) {
+    return requirement;
+  }
+
+  if (viewer.role === 'MENTOR') {
+    const mentor = await prisma.mentorProfile.findUnique({
+      where: { userId: viewer.userId },
+      select: { id: true },
+    });
+
+    if (!mentor) {
+      return requirement;
+    }
+
+    const ownProposals = await prisma.proposal.findMany({
+      where: {
+        requirementId: id,
+        mentorId: mentor.id,
+      },
+      select: {
+        id: true,
+        isActive: true,
+        isAccepted: true,
+        createdAt: true,
+      },
+    });
+
+    return {
+      ...requirement,
+      proposals: ownProposals,
+    };
+  }
+
+  if (viewer.role === 'LEARNER' && requirement.learner.user.id === viewer.userId) {
+    const proposals = await prisma.proposal.findMany({
+      where: { requirementId: id },
+      include: {
+        mentor: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      ...requirement,
+      proposals,
+    };
+  }
+
+  return requirement;
 };
 
-export const deleteRequirement = async (id) => {
-  return await prisma.learnerRequirement.delete({ where: { id } });
+export const deleteRequirement = async (id, learnerUserId) => {
+  const requirement = await prisma.learnerRequirement.findFirst({
+    where: {
+      id,
+      learner: {
+        userId: learnerUserId,
+      },
+    },
+  });
+
+  if (!requirement) {
+    const error = new Error('Requirement not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return prisma.learnerRequirement.delete({ where: { id } });
 };

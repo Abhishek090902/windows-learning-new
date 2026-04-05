@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import { ChevronDown, ChevronUp, LifeBuoy, ShieldCheck, Sparkles } from 'lucide-react';
+import LegalPageLayout from '@/components/legal/LegalPageLayout';
 
 const faqs = [
   { q: 'How does Windows Learning work?', a: 'Windows Learning connects learners with verified industry experts for live, 1-on-1 mentoring sessions via video call. Browse mentors by skill, book a session, and learn in real-time.' },
@@ -21,33 +19,89 @@ const FAQ = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 py-12 px-4" style={{ backgroundColor: 'hsl(var(--surface-warm))' }}>
-        <div className="container max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2 text-center">Frequently Asked Questions</h1>
-          <p className="text-muted-foreground text-center mb-8">Everything you need to know about Windows Learning</p>
+    <LegalPageLayout
+      eyebrow="Support"
+      title="Frequently Asked Questions"
+      description="Clear answers about booking, payments, mentor verification, refunds, and how learning sessions work on Windows Learning."
+      updatedAt="April 5, 2026"
+      asideTitle="Need help faster?"
+      asideCopy="If your question is account-specific, use the support ticket flow so the team can check your booking, wallet, or mentor status directly."
+      accent="radial-gradient(circle at center, rgba(14,165,233,0.28), rgba(255,255,255,0))"
+    >
+      <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="space-y-4">
+          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+            <div className="flex items-center gap-3 text-slate-900">
+              <div className="rounded-2xl bg-sky-100 p-3 text-sky-700">
+                <LifeBuoy className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Helpful before you book</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Check how mentor verification, refunds, payouts, and session delivery work so expectations stay clear on both sides.
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <div className="space-y-3">
-            {faqs.map((faq, i) => (
-              <Card key={i} className="overflow-hidden">
-                <button onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full p-5 flex items-center justify-between text-left">
-                  <span className="font-medium text-sm pr-4">{faq.q}</span>
-                  {openIndex === i ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
-                </button>
-                {openIndex === i && (
-                  <CardContent className="pt-0 pb-5 px-5">
-                    <p className="text-sm text-muted-foreground">{faq.a}</p>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
+          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl bg-emerald-100 p-3 text-emerald-700">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Trust and safety</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Verified mentors, wallet-based payments, and support-led dispute handling help keep sessions reliable and financially accountable.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl bg-violet-100 p-3 text-violet-700">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Best for quick answers</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  These answers cover the common product questions people ask before onboarding, booking, or joining a session.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+
+        <div className="space-y-3">
+          {faqs.map((faq, i) => (
+            <div
+              key={i}
+              className={`overflow-hidden rounded-[1.5rem] border transition-all duration-200 ${
+                openIndex === i ? 'border-slate-300 bg-slate-50 shadow-sm' : 'border-slate-200 bg-white'
+              }`}
+            >
+              <button
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+              >
+                <span className="text-sm font-semibold leading-6 text-slate-900 sm:text-base">{faq.q}</span>
+                {openIndex === i ? (
+                  <ChevronUp className="h-4 w-4 shrink-0 text-slate-500" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                )}
+              </button>
+              {openIndex === i && (
+                <div className="border-t border-slate-200 px-6 py-5">
+                  <p className="text-sm leading-7 text-slate-600">{faq.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </LegalPageLayout>
   );
 };
 

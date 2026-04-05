@@ -12,6 +12,7 @@ const config = {
   port: process.env.PORT || 3000,
   jwtSecret: process.env.JWT_SECRET || 'your_default_secret',
   databaseUrl: process.env.DATABASE_URL,
+  databaseDirectUrl: process.env.DATABASE_DIRECT_URL,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:8080',
   supabaseUrl: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
   supabasePublishableKey:

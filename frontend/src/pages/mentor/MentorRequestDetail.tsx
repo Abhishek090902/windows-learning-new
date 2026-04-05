@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import MentorLayout from '@/components/MentorLayout';
 import { ArrowLeft, IndianRupee, Loader2 } from 'lucide-react';
@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { useRequirement, useSubmitProposal } from '@/hooks/useApi';
+import { useMentorProposals, useRequirement, useSubmitProposal } from '@/hooks/useApi';
 
 const MentorRequestDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { data: requirement, isLoading } = useRequirement(id!);
+  const { data: myProposals = [] } = useMentorProposals();
   const submitProposal = useSubmitProposal();
   const { toast } = useToast();
   const [coverLetter, setCoverLetter] = useState('');
@@ -36,7 +37,7 @@ const MentorRequestDetail = () => {
     );
   }
 
-  const alreadySubmitted = (requirement.proposals || []).some((proposal: any) => proposal.isActive);
+  const alreadySubmitted = myProposals.some((proposal: any) => proposal.requirementId === requirement.id && proposal.isActive);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -89,7 +90,7 @@ const MentorRequestDetail = () => {
                   {Number(requirement.budget || 0).toLocaleString('en-IN')}
                 </Badge>
                 <Badge variant="outline">
-                  {requirement._count?.proposals || requirement.proposals?.length || 0} proposals
+                  {requirement._count?.proposals || 0} proposals
                 </Badge>
               </div>
               <p className="text-sm leading-7 text-muted-foreground">{requirement.description}</p>

@@ -1,6 +1,7 @@
 import express from 'express';
 import { processSearchIntent } from './ai.service.js';
 import prisma from '../../config/db.js';
+import { buildApprovedMentorWhere } from '../../utils/mentorVerification.js';
 
 const router = express.Router();
 
@@ -11,8 +12,7 @@ const mentorInclude = {
   _count: { select: { reviews: true } },
 };
 
-const buildFallbackWhere = (query, skills = []) => ({
-  isVerified: true,
+const buildFallbackWhere = (query, skills = []) => buildApprovedMentorWhere({
   isActive: true,
   deletedAt: null,
   OR: [

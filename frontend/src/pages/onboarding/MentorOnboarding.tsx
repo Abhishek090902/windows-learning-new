@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import api from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { appRoutes } from '@/lib/appRoutes';
 
 const teachableSkills = ['React', 'Node.js', 'Python', 'Data Science', 'UI/UX Design', 'Digital Marketing', 'Cloud Computing', 'AI/ML', 'DevOps', 'Mobile Development', 'Product Management', 'SEO'];
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -14,7 +15,7 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const MentorOnboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, setUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [step, setStep] = useState(1);
   const [skills, setSkills] = useState<string[]>([]);
   const [headline, setHeadline] = useState('');
@@ -75,13 +76,16 @@ const MentorOnboarding = () => {
       };
 
       const response = await api.post('/mentor-profiles', profileData);
+      const updatedUser = response.data?.data?.user;
       
-      setUser(response.data.user);
+      if (updatedUser) {
+        updateUser(updatedUser);
+      }
       toast({
         title: 'Application Submitted!',
         description: 'Our team will review your profile and verify your identity within 24-48 hours.',
       });
-      navigate('/mentor/verification-pending');
+      navigate(appRoutes.mentorVerificationPending);
     } catch (error: any) {
       console.error('Mentor onboarding error:', error);
       toast({
@@ -224,8 +228,8 @@ const MentorOnboarding = () => {
           {step < totalSteps ? (
             <Button onClick={() => setStep(step + 1)} disabled={isLoading}>Next <ChevronRight className="h-4 w-4 ml-1" /></Button>
           ) : (
-            <Button onClick={handleOnboardingSubmit} disabled={isLoading}>
-              {isLoading ? 'Submitting...' : 'Submit for Verification'}
+            <Button onClick={handleOnboardingSubmit} isLoading={isLoading} loadingText="Submitting...">
+              Submit for Verification
             </Button>
           )}
         </div>

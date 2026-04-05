@@ -93,29 +93,19 @@ const Signup = () => {
         return;
       }
 
-      const syncResponse = await fetch('/api/v1/auth/supabase/sync', {
-        method: 'POST',
+      await api.post('/auth/supabase/sync', {}, {
         headers: {
           Authorization: `Bearer ${data.session.access_token}`,
         },
       });
 
-      if (!syncResponse.ok) {
-        throw new Error('Your account was created but profile sync failed.');
-      }
-
-      const meResponse = await fetch('/api/v1/users/me', {
+      const meResponse = await api.get('/users/me', {
         headers: {
           Authorization: `Bearer ${data.session.access_token}`,
         },
       });
 
-      if (!meResponse.ok) {
-        throw new Error('Unable to load your profile after sign up.');
-      }
-
-      const mePayload = await meResponse.json();
-      const newUser = mePayload.data;
+      const newUser = meResponse.data.data;
 
       login(newUser, data.session.access_token);
       toast({
@@ -123,7 +113,11 @@ const Signup = () => {
         description: "You have been successfully registered and logged in.",
       });
     } catch (err: any) {
-      const message = err.response?.data?.error || err.response?.data?.message || "An unexpected error occurred.";
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "An unexpected error occurred.";
       setError(message);
       toast({
         title: "Registration Failed",
@@ -221,8 +215,8 @@ const Signup = () => {
                 disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full h-11 active:scale-[0.98] transition-all" disabled={isLoading}>
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+            <Button type="submit" className="w-full h-11" isLoading={isLoading} loadingText="Creating Account...">
+              Create Account
             </Button>
           </form>
 

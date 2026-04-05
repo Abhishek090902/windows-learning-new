@@ -88,7 +88,9 @@ const MentorProposals = () => {
 
             {filteredProposals.length === 0 && (
               <div className="text-center py-20 text-muted-foreground">
-                No {tab} proposals found.
+                {tab === 'pending'
+                  ? 'No proposals found. Start by creating your first proposal.'
+                  : `No ${tab} proposals found.`}
               </div>
             )}
           </div>

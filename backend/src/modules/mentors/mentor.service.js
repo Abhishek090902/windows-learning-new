@@ -1,11 +1,11 @@
 import prisma from '../../config/db.js';
+import { buildApprovedMentorWhere } from '../../utils/mentorVerification.js';
 
 export const getAllMentors = async (filters) => {
   const { skill, search, category, minPrice, maxPrice, page = 1, limit = 10, sortBy = 'rating' } = filters;
   const normalizedSearch = (search || skill || '').trim();
 
-  const where = {
-    isVerified: true,
+  const where = buildApprovedMentorWhere({
     isActive: true,
     deletedAt: null,
     ...(minPrice || maxPrice ? {
@@ -55,7 +55,7 @@ export const getAllMentors = async (filters) => {
         },
       },
     } : {}),
-  };
+  });
 
   const orderBy = sortBy === 'price_asc' ? { hourlyRate: 'asc' } :
                  sortBy === 'price_desc' ? { hourlyRate: 'desc' } :

@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const { user, setUser, login } = useAuth();
+  const { user, updateUser, login } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const switchRole = useSwitchRole();
@@ -64,7 +64,7 @@ const SettingsPage = () => {
         name: profile.name,
         bio: profile.bio,
       });
-      setUser(response.data.data);
+      updateUser(response.data.data);
       toast({
         title: 'Success',
         description: 'Your profile has been updated successfully.',
@@ -90,7 +90,7 @@ const SettingsPage = () => {
             'Content-Type': 'multipart/form-data',
           },
         });
-        setUser(response.data.data);
+        updateUser(response.data.data);
         toast({
           title: 'Success',
           description: 'Profile picture updated successfully.',
@@ -150,7 +150,7 @@ const SettingsPage = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 <img
-                  src={profile.profilePicture ? `http://localhost:3000${profile.profilePicture}` : `https://ui-avatars.com/api/?name=${profile.name}`}
+                  src={profile.profilePicture ? getUploadUrl(profile.profilePicture) : `https://ui-avatars.com/api/?name=${profile.name}`}
                   alt="Profile"
                   className="w-16 h-16 rounded-full bg-primary/10"
                 />
@@ -254,3 +254,15 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
+  const getUploadUrl = (path?: string | null) => {
+    if (!path) return '';
+    if (/^https?:\/\//i.test(path)) return path;
+
+    const apiBase = import.meta.env.VITE_API_URL || '';
+
+    try {
+      return apiBase ? new URL(path, apiBase).toString() : path;
+    } catch {
+      return path;
+    }
+  };

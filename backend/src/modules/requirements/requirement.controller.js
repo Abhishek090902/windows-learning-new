@@ -35,7 +35,7 @@ export const getRequirements = async (req, res, next) => {
 
 export const getRequirement = async (req, res, next) => {
   try {
-    const requirement = await requirementService.getRequirementById(req.params.id);
+    const requirement = await requirementService.getRequirementById(req.params.id, req.user);
     if (!requirement) {
       const error = new Error('Requirement not found');
       error.statusCode = 404;
@@ -49,7 +49,7 @@ export const getRequirement = async (req, res, next) => {
 
 export const deleteRequirement = async (req, res, next) => {
   try {
-    await requirementService.deleteRequirement(req.params.id);
+    await requirementService.deleteRequirement(req.params.id, req.user.userId);
 
     // Real-time sync for the poster (learner) - ideally we'd know the userId here
     // For now, emit broad update if needed or just specific user if known

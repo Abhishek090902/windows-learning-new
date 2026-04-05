@@ -4,11 +4,31 @@ import chatHandler from './handlers/chatHandler.js';
 import notificationHandler from './handlers/notificationHandler.js';
 import sessionHandler from './handlers/sessionHandler.js';
 import presenceHandler from './handlers/presenceHandler.js';
+import config from '../config/env.js';
+
+const allowedOrigins = (config.frontendUrl || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const setupSocketIO = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:8080', // Default for dev
+      origin(origin, callback) {
+        if (!origin || allowedOrigins.length === 0) {
+          return callback(null, true);
+        }
+
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        if (origin.endsWith('.vercel.app') && allowedOrigins.some((entry) => entry.includes('.vercel.app'))) {
+          return callback(null, true);
+        }
+
+        return callback(new Error(`Origin ${origin} is not allowed by Socket.IO CORS`));
+      },
       credentials: true
     }
   });

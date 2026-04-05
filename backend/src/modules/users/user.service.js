@@ -1,5 +1,11 @@
 import prisma from '../../config/db.js';
 import { syncLearnerSkills } from '../../utils/skillCatalog.js';
+import {
+  buildPendingMentorWhere,
+  buildRejectedMentorWhere,
+  buildApprovedMentorWhere,
+  getNormalizedVerificationStatus,
+} from '../../utils/mentorVerification.js';
 
 export const getAllUsers = async () => {
   return await prisma.user.findMany({
@@ -142,11 +148,11 @@ export const getAllMentors = async (filters = {}) => {
 
   let where = {};
   if (status === 'verified') {
-    where = { isVerified: true };
+    where = buildApprovedMentorWhere();
   } else if (status === 'rejected') {
-    where = { isVerified: false, rejectionReason: { not: null } };
+    where = buildRejectedMentorWhere();
   } else if (status === 'pending') {
-    where = { isVerified: false, rejectionReason: null };
+    where = buildPendingMentorWhere();
   }
 
   const mentors = await prisma.mentorProfile.findMany({
@@ -167,11 +173,7 @@ export const getAllMentors = async (filters = {}) => {
       .filter((s) => s.status === 'COMPLETED')
       .reduce((sum, s) => sum + Number(s.amount || 0), 0);
 
-    const verificationStatus = m.isVerified
-      ? 'verified'
-      : m.rejectionReason
-      ? 'rejected'
-      : 'pending';
+    const verificationStatus = getNormalizedVerificationStatus(m);
 
     return {
       id: m.id,
@@ -199,7 +201,7 @@ export const getAllMentors = async (filters = {}) => {
 
 export const getUnverifiedMentors = async () => {
   return await prisma.mentorProfile.findMany({
-    where: { isVerified: false, rejectionReason: null },
+    where: buildPendingMentorWhere(),
     include: { user: { select: { id: true, email: true, name: true } } },
   });
 };
@@ -207,14 +209,22 @@ export const getUnverifiedMentors = async () => {
 export const verifyMentor = async (mentorProfileId) => {
   return await prisma.mentorProfile.update({
     where: { id: mentorProfileId },
-    data: { isVerified: true, rejectionReason: null },
+    data: {
+      verificationStatus: 'approved',
+      isVerified: true,
+      rejectionReason: null,
+    },
   });
 };
 
 export const rejectMentor = async (mentorProfileId, reason) => {
   return await prisma.mentorProfile.update({
     where: { id: mentorProfileId },
-    data: { isVerified: false, rejectionReason: reason },
+    data: {
+      verificationStatus: 'rejected',
+      isVerified: false,
+      rejectionReason: reason,
+    },
   });
 };
 
@@ -234,9 +244,9 @@ export const getAdminStats = async () => {
     prisma.user.count({ where: { role: { not: 'ADMIN' } } }),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
     prisma.mentorProfile.count(),
-    prisma.mentorProfile.count({ where: { isVerified: true } }),
-    prisma.mentorProfile.count({ where: { isVerified: false, rejectionReason: null } }),
-    prisma.mentorProfile.count({ where: { isVerified: false, rejectionReason: { not: null } } }),
+    prisma.mentorProfile.count({ where: buildApprovedMentorWhere() }),
+    prisma.mentorProfile.count({ where: buildPendingMentorWhere() }),
+    prisma.mentorProfile.count({ where: buildRejectedMentorWhere() }),
     prisma.session.count(),
     prisma.session.count({ where: { status: 'COMPLETED' } }),
     prisma.session.count({ where: { status: 'CANCELLED' } }),

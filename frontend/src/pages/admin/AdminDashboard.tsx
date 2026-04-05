@@ -66,6 +66,18 @@ const fmtNum = (v: unknown): string => {
 };
 const initials = (name: string) =>
   name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+const assetUrl = (path?: string | null) => {
+  if (!path) return undefined;
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const apiBase = import.meta.env.VITE_API_URL || '';
+
+  try {
+    return apiBase ? new URL(path, apiBase).toString() : path;
+  } catch {
+    return path;
+  }
+};
 
 const defaultStats: Stats = {
   users: { total: 0, active: 0, newThisMonth: 0, growth: 0 },
@@ -180,6 +192,10 @@ const AdminDashboard = ({ initialTab }: { initialTab?: TabStatus }) => {
     return () => clearInterval(id);
   }, [fetchStats]);
 
+  const refreshDashboardData = useCallback(async () => {
+    await Promise.all([fetchMentors(), fetchStats()]);
+  }, [fetchMentors, fetchStats]);
+
   // ── Client-side filter + sort ─────────────────────────────────────────────
   const filtered = useMemo(() => {
     let list = [...mentors];
@@ -218,7 +234,7 @@ const AdminDashboard = ({ initialTab }: { initialTab?: TabStatus }) => {
       toast({ title: '✅ Mentor Verified', description: `${selectedMentor.user.name} is now a verified mentor.` });
       setShowVerify(false);
       setSelectedMentor(null);
-      fetchMentors(); fetchStats();
+      await refreshDashboardData();
     } catch (err: any) {
       toast({ title: 'Error', description: err.response?.data?.message || 'Verification failed.', variant: 'destructive' });
     } finally {
@@ -239,7 +255,7 @@ const AdminDashboard = ({ initialTab }: { initialTab?: TabStatus }) => {
       setShowReject(false);
       setSelectedMentor(null);
       setRejectionReason('');
-      fetchMentors(); fetchStats();
+      await refreshDashboardData();
     } catch (err: any) {
       toast({ title: 'Error', description: err.response?.data?.message || 'Rejection failed.', variant: 'destructive' });
     } finally {
@@ -279,7 +295,7 @@ const AdminDashboard = ({ initialTab }: { initialTab?: TabStatus }) => {
             <Button variant="outline" onClick={handleExport} className="gap-2">
               <Download className="h-4 w-4" /> Export CSV
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => { fetchMentors(); fetchStats(); }}
+            <Button variant="ghost" size="icon" onClick={() => { void refreshDashboardData(); }}
               disabled={loading.mentors || loading.stats}>
               <RefreshCw className={`h-4 w-4 ${(loading.mentors || loading.stats) ? 'animate-spin' : ''}`} />
             </Button>
@@ -430,7 +446,7 @@ const AdminDashboard = ({ initialTab }: { initialTab?: TabStatus }) => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-3">
                             <Avatar className="h-12 w-12 shrink-0">
-                              <AvatarImage src={mentor.user.profilePicture ? `http://localhost:3000${mentor.user.profilePicture}` : undefined} />
+                              <AvatarImage src={assetUrl(mentor.user.profilePicture)} />
                               <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                                 {initials(mentor.user.name)}
                               </AvatarFallback>

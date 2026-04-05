@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { 
   ArrowLeft,
@@ -111,11 +111,7 @@ const MentorProfileView: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchMentorProfile();
-  }, [id]);
-
-  const fetchMentorProfile = async () => {
+  const fetchMentorProfile = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/v1/mentor-profiles/${id}`);
@@ -134,7 +130,11 @@ const MentorProfileView: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, toast]);
+
+  useEffect(() => {
+    void fetchMentorProfile();
+  }, [fetchMentorProfile]);
 
   const handleBookSession = () => {
     navigate(`/mentor/${id}/book`);

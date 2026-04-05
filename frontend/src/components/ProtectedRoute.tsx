@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { getDefaultAuthenticatedRoute, requiresRoleOnboarding } from '@/lib/userRouting';
+import { getDefaultAuthenticatedRoute, requiresMentorVerification, requiresRoleOnboarding } from '@/lib/userRouting';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -26,10 +26,22 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
   const onboardingRoute = user.role === 'MENTOR' ? '/onboarding/mentor' : '/onboarding/learner';
   const isOnboardingPage = location.pathname.startsWith('/onboarding/');
+  const isVerificationPendingPage = location.pathname === '/mentor/verification-pending';
   const needsOnboarding = requiresRoleOnboarding(user);
+  const needsMentorVerification = requiresMentorVerification(user);
+  const mentorVerificationAllowlist = ['/mentor/verification-pending', '/mentor/profile/edit', '/settings', '/chat'];
+  const isAllowedDuringVerification = mentorVerificationAllowlist.some((path) => location.pathname.startsWith(path));
 
   if (needsOnboarding && !isOnboardingPage && location.pathname !== '/mentor/verification-pending') {
     return <Navigate to={onboardingRoute} replace />;
+  }
+
+  if (needsMentorVerification && !isAllowedDuringVerification) {
+    return <Navigate to="/mentor/verification-pending" replace />;
+  }
+
+  if (isVerificationPendingPage && !needsMentorVerification) {
+    return <Navigate to={getDefaultAuthenticatedRoute(user)} replace />;
   }
 
   if (!needsOnboarding && isOnboardingPage) {

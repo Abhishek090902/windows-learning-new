@@ -936,8 +936,8 @@ const MentorProfileEdit = () => {
         </Tabs>
 
         <div className="flex gap-3 mt-8">
-          <Button className="gap-1" onClick={handleSaveChanges} disabled={isLoading}>
-            <Save className="h-4 w-4" /> {isLoading ? 'Saving...' : 'Save Changes'}
+          <Button className="gap-1" onClick={handleSaveChanges} isLoading={isLoading} loadingText="Saving...">
+            <Save className="h-4 w-4" /> Save Changes
           </Button>
           <Button variant="outline" onClick={() => navigate('/mentor/dashboard')} disabled={isLoading}>Cancel</Button>
         </div>

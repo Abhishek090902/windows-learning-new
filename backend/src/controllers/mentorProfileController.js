@@ -2,6 +2,7 @@ import prisma from '../config/db.js';
 import { emitDataUpdate } from '../utils/socketEmitter.js';
 import { sendSuccess } from '../utils/responseHandler.js';
 import { syncMentorProfileSkills } from '../utils/skillCatalog.js';
+import { buildApprovedMentorWhere } from '../utils/mentorVerification.js';
 
 const mentorProfileInclude = {
   user: {
@@ -182,18 +183,19 @@ const createMentorProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
     const existingProfile = await prisma.mentorProfile.findUnique({ where: { userId } });
-
-    if (existingProfile) {
-      return res.status(400).json({ error: 'Mentor profile already exists' });
-    }
-
-    const profile = await prisma.mentorProfile.create({
-      data: {
-        userId,
-        ...buildMentorProfileWriteData(req.body, req.user.name),
-      },
-      include: mentorProfileInclude,
-    });
+    const profile = existingProfile
+      ? await prisma.mentorProfile.update({
+          where: { id: existingProfile.id },
+          data: buildMentorProfileWriteData(req.body, req.user.name),
+          include: mentorProfileInclude,
+        })
+      : await prisma.mentorProfile.create({
+          data: {
+            userId,
+            ...buildMentorProfileWriteData(req.body, req.user.name),
+          },
+          include: mentorProfileInclude,
+        });
 
     await syncMentorProfileSkills(profile.id, req.body.skillsData || {});
 
@@ -225,14 +227,15 @@ const createMentorProfile = async (req, res) => {
     emitDataUpdate(io, userId, 'profile');
     emitDataUpdate(io, null, 'mentors');
 
-    return res.status(201).json({
-      success: true,
-      message: 'Mentor profile created successfully',
-      data: {
+    return sendSuccess(
+      res,
+      {
         profile: buildProfilePayload(hydratedProfile),
         user: updatedUser,
       },
-    });
+      existingProfile ? 'Mentor profile updated successfully' : 'Mentor profile created successfully',
+      existingProfile ? 200 : 201,
+    );
   } catch (error) {
     console.error('Create mentor profile error:', error);
     return res.status(500).json({ error: 'Failed to create mentor profile' });
@@ -282,14 +285,14 @@ const updateMentorProfile = async (req, res) => {
     emitDataUpdate(io, userId, 'profile');
     emitDataUpdate(io, null, 'mentors');
 
-    return res.json({
-      success: true,
-      message: 'Profile updated successfully',
-      data: {
+    return sendSuccess(
+      res,
+      {
         profile: buildProfilePayload(hydratedProfile || updatedProfile),
         user: updatedUser,
       },
-    });
+      'Profile updated successfully',
+    );
   } catch (error) {
     console.error('Update mentor profile error:', error);
     return res.status(500).json({ error: 'Failed to update mentor profile' });
@@ -312,14 +315,13 @@ const searchMentors = async (req, res) => {
     const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
     const take = parseInt(limit, 10);
 
-    const where = {
+    const whereFilters = {
       isActive: true,
       deletedAt: null,
-      verificationStatus: 'approved',
     };
 
     if (search) {
-      where.OR = [
+      whereFilters.OR = [
         { fullName: { contains: search, mode: 'insensitive' } },
         { headline: { contains: search, mode: 'insensitive' } },
         { bio: { contains: search, mode: 'insensitive' } },
@@ -327,17 +329,19 @@ const searchMentors = async (req, res) => {
     }
 
     if (minRate) {
-      where.hourlyRate = { ...(where.hourlyRate || {}), gte: parseFloat(minRate) };
+      whereFilters.hourlyRate = { ...(whereFilters.hourlyRate || {}), gte: parseFloat(minRate) };
     }
     if (maxRate) {
-      where.hourlyRate = { ...(where.hourlyRate || {}), lte: parseFloat(maxRate) };
+      whereFilters.hourlyRate = { ...(whereFilters.hourlyRate || {}), lte: parseFloat(maxRate) };
     }
     if (experience) {
-      where.experienceYears = { gte: parseInt(experience, 10) };
+      whereFilters.experienceYears = { gte: parseInt(experience, 10) };
     }
     if (rating) {
-      where.averageRating = { gte: parseFloat(rating) };
+      whereFilters.averageRating = { gte: parseFloat(rating) };
     }
+
+    const where = buildApprovedMentorWhere(whereFilters);
 
     const orderBy = {};
     switch (sortBy) {

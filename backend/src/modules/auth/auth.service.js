@@ -4,18 +4,22 @@ import jwt from 'jsonwebtoken';
 import config from '../../config/env.js';
 import { OAuth2Client } from 'google-auth-library';
 import { syncSupabaseUser } from './supabase-auth.service.js';
+import { AUTH_PROVIDERS, claimLegacyIdentity, findUserByIdentity, normalizeEmail } from './identity.service.js';
 
 const googleClient = new OAuth2Client();
 
 
 export const registerUser = async (userData) => {
   const { email, password, name, role } = userData;
+  const normalizedEmail = normalizeEmail(email);
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.create({
     data: {
-      email,
+      email: normalizedEmail,
+      authProvider: AUTH_PROVIDERS.EMAIL,
+      providerUserId: normalizedEmail,
       password: hashedPassword,
       name,
       role: role || 'LEARNER',
@@ -42,7 +46,15 @@ export const registerUser = async (userData) => {
 };
 
 export const loginUser = async (email, password) => {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const normalizedEmail = normalizeEmail(email);
+  const user = await prisma.user.findFirst({
+    where: {
+      email: normalizedEmail,
+      authProvider: {
+        in: [AUTH_PROVIDERS.EMAIL, AUTH_PROVIDERS.LEGACY],
+      },
+    },
+  });
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new Error('Invalid email or password');
@@ -67,15 +79,33 @@ export const googleLoginUser = async (accessToken, role = 'LEARNER') => {
   
   if (!payload || !payload.email) throw new Error("Invalid Google token");
   
-  const { email, name, picture } = payload;
-  
-  let user = await prisma.user.findUnique({ 
-    where: { email },
-    include: {
-      mentorProfile: true,
-      learnerProfile: true,
-    }
-  });
+  const email = normalizeEmail(payload.email);
+  const { name, picture, sub } = payload;
+
+  const identity = {
+    email,
+    authProvider: AUTH_PROVIDERS.GOOGLE,
+    providerUserId: sub,
+  };
+
+  let existingUser = await findUserByIdentity(prisma, identity);
+  let user = null;
+
+  if (existingUser?.authProvider === AUTH_PROVIDERS.LEGACY) {
+    user = await claimLegacyIdentity(prisma, existingUser.id, identity, {
+      name,
+      profilePicture: picture,
+    });
+  } else if (existingUser) {
+    user = await prisma.user.findUnique({
+      where: { id: existingUser.id },
+      include: {
+        mentorProfile: true,
+        learnerProfile: true,
+        wallet: true,
+      },
+    });
+  }
   
   if (!user) {
     const randomPassword = Math.random().toString(36).slice(-10) + "A1!";
@@ -84,6 +114,8 @@ export const googleLoginUser = async (accessToken, role = 'LEARNER') => {
     user = await prisma.user.create({
       data: {
         email,
+        authProvider: AUTH_PROVIDERS.GOOGLE,
+        providerUserId: sub,
         name,
         password: hashedPassword,
         profilePicture: picture,

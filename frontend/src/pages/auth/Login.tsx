@@ -6,7 +6,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2 } from 'lucide-react';
 import { getDefaultAuthenticatedRoute } from '@/lib/userRouting';
 import api from '@/lib/api';
 import { supabase } from '@/lib/supabase';
@@ -64,29 +63,19 @@ const Login = () => {
         throw error || new Error('Invalid email or password');
       }
 
-      const response = await fetch('/api/v1/auth/supabase/sync', {
-        method: 'POST',
+      await api.post('/auth/supabase/sync', {}, {
         headers: {
           Authorization: `Bearer ${data.session.access_token}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Could not sync your account profile.');
-      }
-
-      const meResponse = await fetch('/api/v1/users/me', {
+      const meResponse = await api.get('/users/me', {
         headers: {
           Authorization: `Bearer ${data.session.access_token}`,
         },
       });
 
-      if (!meResponse.ok) {
-        throw new Error('Could not load your profile.');
-      }
-
-      const mePayload = await meResponse.json();
-      const appUser = mePayload.data;
+      const appUser = meResponse.data.data;
 
       login(appUser, data.session.access_token);
       
@@ -99,7 +88,11 @@ const Login = () => {
     } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error?.message || "Invalid email or password",
+        description:
+          error?.response?.data?.error ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "Invalid email or password",
         variant: "destructive",
       });
     } finally {
@@ -170,8 +163,8 @@ const Login = () => {
               </label>
               <Link to="/forgot-password" className={`text-primary hover:underline text-sm ${isLoading ? 'pointer-events-none opacity-50' : ''}`}>Forgot password?</Link>
             </div>
-            <Button type="submit" className="w-full h-11 active:scale-[0.98] transition-all" disabled={isLoading}>
-              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing In...</> : 'Sign In'}
+            <Button type="submit" className="w-full h-11" isLoading={isLoading} loadingText="Signing In...">
+              Sign In
             </Button>
           </form>
 

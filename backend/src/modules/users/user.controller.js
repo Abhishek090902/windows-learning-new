@@ -74,6 +74,8 @@ export const getMentors = async (req, res, next) => {
 export const verifyMentor = async (req, res, next) => {
   try {
     const mentor = await userService.verifyMentor(req.params.mentorProfileId);
+    emitDataUpdate(req.app.get('io'), mentor.userId, 'user');
+    emitDataUpdate(req.app.get('io'), mentor.userId, 'profile');
     emitDataUpdate(req.app.get('io'), null, 'mentors');
     return sendSuccess(res, mentor, 'Mentor verified successfully');
   } catch (error) { next(error); }
@@ -86,6 +88,8 @@ export const rejectMentor = async (req, res, next) => {
       const e = new Error('Rejection reason is required'); e.statusCode = 400; throw e;
     }
     const mentor = await userService.rejectMentor(req.params.mentorProfileId, reason.trim());
+    emitDataUpdate(req.app.get('io'), mentor.userId, 'user');
+    emitDataUpdate(req.app.get('io'), mentor.userId, 'profile');
     emitDataUpdate(req.app.get('io'), null, 'mentors');
     return sendSuccess(res, mentor, 'Mentor rejected successfully');
   } catch (error) { next(error); }
