@@ -5,7 +5,7 @@
 Deploy this project as two separate services:
 
 1. `frontend` on Vercel
-2. `backend` on a Node-friendly host such as Render, Railway, or another VPS/container host
+2. `backend` on a Node-friendly host such as Render or another VPS/container host
 
 This repository's backend uses Express, Prisma, and Socket.IO. The real-time Socket.IO layer is not a good fit for a pure Vercel serverless deployment.
 
@@ -68,32 +68,20 @@ When creating the Vercel project:
 
 The SPA rewrite is already configured in [frontend/vercel.json](/e:/WEB/Windows-Learning/frontend/vercel.json).
 
-## Railway Setup
+## Backend Host Setup
 
-For Railway, deploy only the backend service from this repository.
+For any non-Vercel Node host, deploy only the backend service from this repository.
 
-Railway docs I used:
+### Backend host steps
 
-- https://docs.railway.com/guides/express
-- https://docs.railway.com/deployments/monorepo
-- https://docs.railway.com/variables
-- https://docs.railway.com/config-as-code
+1. Create a backend service from this GitHub repo
+2. Set the service root directory to `backend` if your host supports monorepo root selection
+3. Build with `npm run build`
+4. Run migrations with `npm run prisma:migrate:deploy`
+5. Start the backend with `npm start`
+6. Add the required environment variables in the host dashboard
 
-This repo now includes Railway config in [backend/railway.toml](/e:/WEB/Windows-Learning/backend/railway.toml).
-
-### Railway backend steps
-
-1. Create a new Railway project
-2. Add a service from your GitHub repo
-3. Set the service Root Directory to `/backend`
-4. If Railway does not auto-detect the config file, set the config path to `/backend/railway.toml`
-5. Generate a public domain in the service Networking tab
-6. Add the required service variables in the Variables tab
-7. Deploy the service
-
-### Railway variables to add
-
-If you keep using your current Neon + Supabase setup, add these values to the Railway backend service:
+### Backend variables to add
 
 - `DATABASE_URL`
 - `DATABASE_DIRECT_URL`
@@ -111,14 +99,14 @@ If you keep using your current Neon + Supabase setup, add these values to the Ra
 
 - `FRONTEND_URL` should be your deployed frontend URL, for example `https://your-app.vercel.app`
 - If you have multiple frontend domains, use a comma-separated list
-- Keep `DATABASE_URL` and `DATABASE_DIRECT_URL` as your Neon connection strings unless you want to migrate databases
+- `DATABASE_URL` and `DATABASE_DIRECT_URL` should point to your production PostgreSQL database
 
 ### Verify after deploy
 
-- Open `https://your-railway-domain/api/health`
+- Open `https://your-backend-domain/api/health`
 - Confirm it returns `ok: true`
-- Set `VITE_API_URL=https://your-railway-domain/api/v1` in the frontend deployment
-- Set `VITE_SOCKET_URL=https://your-railway-domain` in the frontend deployment
+- Set `VITE_API_URL=https://your-backend-domain/api/v1` in the frontend deployment
+- Set `VITE_SOCKET_URL=https://your-backend-domain` in the frontend deployment
 
 ## Why Your Current Deploy Fails
 
